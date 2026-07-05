@@ -1,1 +1,25 @@
-<p>login works!</p>
+<div class="login-page">
+
+    <mat-card class="login-card">
+        <div class="logo-box">
+            <img src="/logo/HiveLogo.png" alt="Hive Logo" class="logo" />
+            <h1>Hive</h1>
+        </div>
+        
+        <h2>Login</h2>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email</mat-label>
+            <input matInput [(ngModel)]="email">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" [(ngModel)]="password">
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" class="full-width" (click)="login()">
+            Login
+        </button>
+    </mat-card>
+</div>
