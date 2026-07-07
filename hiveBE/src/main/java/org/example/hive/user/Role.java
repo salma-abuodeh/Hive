@@ -1,4 +1,4 @@
-package user;
+package org.example.hive.user;
 
 import jakarta.persistence.*;
 

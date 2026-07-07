@@ -1,14 +1,14 @@
-package security;
+package org.example.hive.security;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import user.Role;
-import user.User;
-import user.UserRepository;
-import user.UserRole;
+import org.example.hive.user.Role;
+import org.example.hive.user.User;
+import org.example.hive.user.UserRepository;
+import org.example.hive.user.UserRole;
 
 import java.util.HashSet;
 import java.util.Set;

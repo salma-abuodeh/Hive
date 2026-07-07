@@ -1,4 +1,4 @@
-package user;
+package org.example.hive.user;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "user")
+@Table(name = "org/example/hive/user")
 public class User {
 
     private Long userId;
@@ -19,7 +19,7 @@ public class User {
     private String status;
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "org/example/hive/user", fetch = FetchType.EAGER)
     private Set<UserRole> userRoles = new HashSet<>();
 
     public Long getUserId() {
