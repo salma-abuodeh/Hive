@@ -1,7 +1,8 @@
-package org.example.hive.domain;
+package org.example.hive.auth;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.hive.company.Company;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +25,7 @@ public class User {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)

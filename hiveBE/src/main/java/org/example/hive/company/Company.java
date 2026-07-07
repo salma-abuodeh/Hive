@@ -1,7 +1,9 @@
-package org.example.hive.domain;
+package org.example.hive.company;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.hive.auth.Role;
+import org.example.hive.auth.User;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

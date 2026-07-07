@@ -1,4 +1,4 @@
-package org.example.hive.domain;
+package org.example.hive.company;
 
 public enum CompanyType {
     COMPANY,

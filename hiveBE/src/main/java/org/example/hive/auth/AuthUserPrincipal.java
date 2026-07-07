@@ -1,4 +1,4 @@
-package org.example.hive.security;
+package org.example.hive.auth;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,10 +31,6 @@ public class AuthUserPrincipal implements UserDetails {
 
     public Long getCompanyId() {
         return companyId;
-    }
-
-    public String getEmail() {
-        return email;
     }
 
     @Override

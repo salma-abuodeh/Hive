@@ -1,24 +1,31 @@
 package org.example.hive.auth;
 
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
-    private AuthService authService;
-    public AuthController(AuthService authService){
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
-
-@PostMapping("/login")
-    public LoginResponseDto login(@RequestBody LoginRequestDto req){
+    @PostMapping("/login")
+    public LoginResponseDto login(@Valid @RequestBody LoginRequestDto req) {
         return authService.login(req);
+    }
 
-}
-
-
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LoginResponseDto register(@Valid @RequestBody RegisterRequestDto req) {
+        return authService.register(req);
+    }
 }
