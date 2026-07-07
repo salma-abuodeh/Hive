@@ -1,4 +1,4 @@
-package org.example.hive.auth;
+package org.example.hive.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -58,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception ignored) {
-            // Invalid token — let entry point handle unauthorized access
+            // Invalid token — let security handle unauthorized access
         }
 
         filterChain.doFilter(request, response);

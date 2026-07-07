@@ -1,4 +1,4 @@
-package org.example.hive.auth;
+package org.example.hive.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
-public class AuthExceptionHandler {
+public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ErrorResponseDto> handleAuthException(AuthException ex) {

@@ -1,5 +1,7 @@
-package org.example.hive.auth;
+package org.example.hive.security;
 
+import org.example.hive.auth.User;
+import org.example.hive.auth.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -2,6 +2,9 @@ package org.example.hive.auth;
 
 import org.example.hive.company.Company;
 import org.example.hive.company.CompanyRepository;
+import org.example.hive.exception.AuthException;
+import org.example.hive.security.CustomUserDetailsService;
+import org.example.hive.security.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

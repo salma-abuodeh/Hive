@@ -1,4 +1,4 @@
-package org.example.hive.auth;
+package org.example.hive.exception;
 
 import org.springframework.http.HttpStatus;
 
