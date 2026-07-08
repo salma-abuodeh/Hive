@@ -53,7 +53,7 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponseDto register(RegisterRequestDto req) {
+    public RegisterResponseDto register(RegisterRequestDto req) {
         if (userRepository.existsByEmail(req.getEmail())) {
             throw new AuthException("Email already registered", HttpStatus.CONFLICT);
         }
@@ -75,7 +75,8 @@ public class AuthService {
                 .orElseThrow(() -> new AuthException("Default role not found", HttpStatus.INTERNAL_SERVER_ERROR));
 
         User user = User.builder()
-                .fullName(req.getFullName())
+                .firstName(req.getFirstName())
+                .lastName(req.getLastName())
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .createdAt(LocalDateTime.now())
@@ -86,6 +87,14 @@ public class AuthService {
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken(userDetails);
-        return new LoginResponseDto(token);
+        return new RegisterResponseDto(
+                token,
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                company.getId(),
+                company.getName()
+        );
     }
 }

@@ -12,9 +12,13 @@ import org.example.hive.company.CompanyType;
 @Setter
 public class RegisterRequestDto {
 
-    @NotBlank(message = "Full name is required")
+    @NotBlank(message = "First name is required")
     @Size(max = 255)
-    private String fullName;
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @Size(max = 255)
+    private String lastName;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
