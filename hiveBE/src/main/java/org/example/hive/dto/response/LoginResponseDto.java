@@ -1,4 +1,4 @@
-package org.example.hive.auth;
+package org.example.hive.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

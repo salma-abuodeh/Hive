@@ -1,4 +1,4 @@
-package org.example.hive.auth;
+package org.example.hive.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

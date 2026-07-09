@@ -1,8 +1,16 @@
-package org.example.hive.auth;
+package org.example.hive.service;
 
-import org.example.hive.company.Company;
-import org.example.hive.company.CompanyRepository;
+import org.example.hive.domain.Company;
+import org.example.hive.domain.Role;
+import org.example.hive.domain.User;
+import org.example.hive.dto.request.LoginRequestDto;
+import org.example.hive.dto.request.RegisterRequestDto;
+import org.example.hive.dto.response.LoginResponseDto;
+import org.example.hive.dto.response.RegisterResponseDto;
 import org.example.hive.exception.AuthException;
+import org.example.hive.repository.CompanyRepository;
+import org.example.hive.repository.RoleRepository;
+import org.example.hive.repository.UserRepository;
 import org.example.hive.security.CustomUserDetailsService;
 import org.example.hive.security.JwtService;
 import org.springframework.http.HttpStatus;

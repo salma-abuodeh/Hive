@@ -1,5 +1,7 @@
-package org.example.hive.security;
+package org.example.hive.config;
 
+import org.example.hive.security.CustomUserDetailsService;
+import org.example.hive.security.JwtAuthenticationFilter;
 import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +39,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable());
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/auth/**").permitAll()
                 .anyRequest().authenticated());
         http.formLogin(withDefaults());
         http.authenticationProvider(authenticationProvider());

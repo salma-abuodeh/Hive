@@ -1,8 +1,7 @@
-package org.example.hive.auth;
+package org.example.hive.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.hive.company.Company;
 
 import java.util.ArrayList;
 import java.util.List;

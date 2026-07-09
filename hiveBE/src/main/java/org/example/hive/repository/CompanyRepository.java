@@ -1,5 +1,6 @@
-package org.example.hive.company;
+package org.example.hive.repository;
 
+import org.example.hive.domain.Company;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

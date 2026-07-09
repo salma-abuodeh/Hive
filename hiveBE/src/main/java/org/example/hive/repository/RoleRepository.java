@@ -1,5 +1,6 @@
-package org.example.hive.auth;
+package org.example.hive.repository;
 
+import org.example.hive.domain.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

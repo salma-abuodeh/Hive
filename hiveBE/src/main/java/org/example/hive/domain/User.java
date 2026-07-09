@@ -1,8 +1,7 @@
-package org.example.hive.auth;
+package org.example.hive.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.hive.company.Company;
 
 import java.time.LocalDateTime;
 
@@ -36,6 +35,10 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)

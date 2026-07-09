@@ -3,6 +3,7 @@ package org.example.hive.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -22,11 +23,25 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(UserException.class)
+    public ResponseEntity<ErrorResponseDto> handleUserException(UserException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponseDto(401, "Invalid email or password", LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ErrorResponseDto> handleDisabled(DisabledException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponseDto(403, "Account is deactivated", LocalDateTime.now()));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

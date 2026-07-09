@@ -11,17 +11,20 @@ public class AuthUserPrincipal implements UserDetails {
     private final Long companyId;
     private final String email;
     private final String password;
+    private final boolean active;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public AuthUserPrincipal(Long userId,
                              Long companyId,
                              String email,
                              String password,
+                             boolean active,
                              Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.companyId = companyId;
         this.email = email;
         this.password = password;
+        this.active = active;
         this.authorities = authorities;
     }
 
@@ -65,6 +68,6 @@ public class AuthUserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return active;
     }
 }
