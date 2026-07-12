@@ -1,0 +1,66 @@
+<div class="signup-page">
+    <mat-card class="signup-card">
+      <div class="logo-box">
+        <img src="/logo/HiveLogo.png" alt="Hive Logo" class="logo" />
+        <h1>Hive</h1>
+      </div>
+  
+      <h2>Sign Up</h2>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>First Name</mat-label>
+        <input matInput [(ngModel)]="firstName">
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Last Name</mat-label>
+        <input matInput [(ngModel)]="lastName">
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" [(ngModel)]="email">
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" [(ngModel)]="password">
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Company Name</mat-label>
+        <input matInput [(ngModel)]="companyName">
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Company Type</mat-label>
+        <mat-select [(ngModel)]="companyType">
+          @for (type of companyTypes; track type) {
+            <mat-option [value]="type">{{ type }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Company Domain (optional)</mat-label>
+        <input matInput [(ngModel)]="companyDomain">
+      </mat-form-field>
+  
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+  
+      <button mat-raised-button color="primary" class="full-width"
+              [disabled]="loading()" (click)="signup()">
+        @if (loading()) {
+          Signing up...
+        } @else {
+          Sign Up
+        }
+      </button>
+  
+      <p class="link-text">
+        Already have an account? <a routerLink="/login">Log in</a>
+      </p>
+    </mat-card>
+  </div>

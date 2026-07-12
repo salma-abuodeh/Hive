@@ -33,7 +33,9 @@ export class Login {
   login(): void {
     this.loading.set(true);
     this.error.set('');
-    this.authService.login({ email: this.email, password: this.password }).subscribe({
+    this.authService.login({ email: this.email
+      , password: this.password
+     }).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/dashboard']);
