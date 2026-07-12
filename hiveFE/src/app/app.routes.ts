@@ -5,6 +5,8 @@ import { CommunityFeed } from './features/community/pages/community-feed/communi
 import { NotificationsHome } from './features/notifications/pages/notifications-home/notifications-home';
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
 import { AppLayout } from './layouts/app-layout/app-layout';
+import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
   {
@@ -12,16 +14,16 @@ export const routes: Routes = [
     component: AuthLayout,
     children: [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', component: Login }
+      { path: 'login', component: Login, canActivate: [guestGuard]}
     ]
   },
   {
     path: '',
     component: AppLayout,
     children: [
-      { path: 'dashboard', component: DashboardHome },
-      { path: 'community', component: CommunityFeed },
-      { path: 'notifications', component: NotificationsHome }
+      { path: 'dashboard', component: DashboardHome, canActivate: [authGuard] },
+      { path: 'community', component: CommunityFeed, canActivate: [authGuard] },
+      { path: 'notifications', component: NotificationsHome, canActivate: [authGuard] }
     ]
   },
   {
