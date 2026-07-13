@@ -7,6 +7,9 @@ import { AuthLayout } from './layouts/auth-layout/auth-layout';
 import { AppLayout } from './layouts/app-layout/app-layout';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { Signup } from './features/auth/pages/signup/signup';
+
+
 
 export const routes: Routes = [
   {
@@ -14,7 +17,8 @@ export const routes: Routes = [
     component: AuthLayout,
     children: [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', component: Login, canActivate: [guestGuard]}
+      { path: 'login', component: Login, canActivate: [guestGuard]},
+      { path: 'signup', component: Signup, canActivate: [guestGuard]}
     ]
   },
   {
