@@ -1,10 +1,9 @@
-package org.example.hive.domain;
+package org.example.hive.model;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "roles")
@@ -14,12 +13,13 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"company", "users"})
+@ToString(exclude = {"company"})
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
+    @Column(name = "role_id")
     private Long id;
 
     @Column(nullable = false)
@@ -27,11 +27,16 @@ public class Role {
 
     private String description;
 
+    @Column(nullable = false)
+    private Boolean active;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     private Company company;
-
-    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<User> users = new ArrayList<>();
 }

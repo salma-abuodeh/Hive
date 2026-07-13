@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.hive.domain.CompanyType;
+import org.example.hive.model.CompanyType;
 
 @Getter
 @Setter

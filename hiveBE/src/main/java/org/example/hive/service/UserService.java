@@ -1,8 +1,9 @@
 package org.example.hive.service;
 
-import org.example.hive.domain.Company;
-import org.example.hive.domain.Role;
-import org.example.hive.domain.User;
+import org.example.hive.model.Company;
+import org.example.hive.model.Role;
+import org.example.hive.model.RoleNames;
+import org.example.hive.model.User;
 import org.example.hive.dto.request.CreateUserRequest;
 import org.example.hive.dto.request.UpdateUserRequest;
 import org.example.hive.dto.response.UserResponseDto;
@@ -22,8 +23,6 @@ import java.time.LocalDateTime;
 
 @Service
 public class UserService {
-
-    private static final String COMPANY_ADMIN_ROLE = "Company Admin";
 
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
@@ -129,8 +128,8 @@ public class UserService {
     }
 
     private Role resolveAssignableRole(String roleName) {
-        if (COMPANY_ADMIN_ROLE.equals(roleName)) {
-            throw new UserException("Cannot assign Company Admin role", HttpStatus.BAD_REQUEST);
+        if (RoleNames.COMPANY_ADMIN.equals(roleName) || RoleNames.ADMIN.equals(roleName)) {
+            throw new UserException("Cannot assign this role", HttpStatus.BAD_REQUEST);
         }
 
         return roleRepository.findByNameAndCompanyIsNull(roleName)

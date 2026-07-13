@@ -1,8 +1,9 @@
 package org.example.hive.service;
 
-import org.example.hive.domain.Company;
-import org.example.hive.domain.Role;
-import org.example.hive.domain.User;
+import org.example.hive.model.Company;
+import org.example.hive.model.Role;
+import org.example.hive.model.RoleNames;
+import org.example.hive.model.User;
 import org.example.hive.dto.request.LoginRequestDto;
 import org.example.hive.dto.request.RegisterRequestDto;
 import org.example.hive.dto.response.LoginResponseDto;
@@ -79,7 +80,7 @@ public class AuthService {
                 .build();
         company = companyRepository.save(company);
 
-        Role adminRole = roleRepository.findByNameAndCompanyIsNull("Company Admin")
+        Role adminRole = roleRepository.findByNameAndCompanyIsNull(RoleNames.COMPANY_ADMIN)
                 .orElseThrow(() -> new AuthException("Default role not found", HttpStatus.INTERNAL_SERVER_ERROR));
 
         User user = User.builder()

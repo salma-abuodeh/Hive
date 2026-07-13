@@ -1,6 +1,6 @@
 package org.example.hive.security;
 
-import org.example.hive.domain.User;
+import org.example.hive.model.User;
 import org.example.hive.repository.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

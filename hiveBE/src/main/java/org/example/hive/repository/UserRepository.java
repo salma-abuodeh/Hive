@@ -1,6 +1,6 @@
 package org.example.hive.repository;
 
-import org.example.hive.domain.User;
+import org.example.hive.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,6 +1,6 @@
 package org.example.hive.mapper;
 
-import org.example.hive.domain.User;
+import org.example.hive.model.User;
 import org.example.hive.dto.response.UserResponseDto;
 
 public final class UserMapper {
