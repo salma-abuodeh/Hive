@@ -26,26 +26,7 @@
         <mat-label>Password</mat-label>
         <input matInput type="password" [(ngModel)]="password">
       </mat-form-field>
-  
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Company Name</mat-label>
-        <input matInput [(ngModel)]="companyName">
-      </mat-form-field>
-  
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Company Type</mat-label>
-        <mat-select [(ngModel)]="companyType">
-          @for (type of companyTypes; track type) {
-            <mat-option [value]="type">{{ type }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-  
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Company Domain (optional)</mat-label>
-        <input matInput [(ngModel)]="companyDomain">
-      </mat-form-field>
-  
+
       @if (error()) {
         <p class="error">{{ error() }}</p>
       }

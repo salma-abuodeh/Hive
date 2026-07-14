@@ -1,32 +1,41 @@
 export interface LoginRequest {
-    email: string;
-    password: string;
-  }
+  email: string;
+  password: string;
+}
 
-  
-export interface LoginResponse {
-    token: string;
-  }
-
-  export type CompanyType = 'COMPANY' | 'SCHOOL';
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
-  companyName: string;
-  companyType: CompanyType;
-  companyDomain?: string;
 }
-export interface RegisterResponse {
+
+export interface CompanySummary {
+  id: number;
+  name: string;
+}
+
+export interface LoginResponse {
   token: string;
-  userId: number;
-  email: string;
+  id: number;
   firstName: string;
   lastName: string;
-  companyId: number;
-  companyName: string;
+  email: string;
+  role: string;
+  active: boolean;
+  companies: CompanySummary[];
 }
+
+export interface RegisterResponse {
+  token: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  active: boolean;
+}
+
 export interface ApiError {
   status: number;
   message: string;

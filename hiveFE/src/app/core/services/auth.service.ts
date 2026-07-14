@@ -12,45 +12,54 @@ import {
 } from '../../features/auth/models/auth.models';
 
 const TOKEN_KEY = 'hive_token';
+const USER_KEY = 'hive_user';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-    readonly http = inject(HttpClient);
-     readonly baseUrl = `${environment.apiUrl}/auth`;
-     private readonly platformId = inject(PLATFORM_ID);
+  private readonly http = inject(HttpClient);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly baseUrl = `${environment.apiUrl}/auth`;
 
+  login(payload: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload).pipe(
+      tap(res => this.saveSession(res))
+    );
+  }
 
-     login(payload: LoginRequest): Observable<LoginResponse> {
-        return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload).pipe(
-          tap(res => this.setToken(res.token))
-        );
-      }
-      register(payload: RegisterRequest): Observable<RegisterResponse> {
-        return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, payload).pipe(
-            tap(res => this.setToken(res.token)));}
+  register(payload: RegisterRequest): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, payload).pipe(
+      tap(res => this.saveSession(res))
+    );
+  }
 
-            private setToken(token: string): void {
-                if (!isPlatformBrowser(this.platformId)) {
-                    return;
-                }
-                localStorage.setItem(TOKEN_KEY, token);
-              }
-              getToken(): string | null {
-                if (!isPlatformBrowser(this.platformId)) {
-                  return null;
-                }
-                return localStorage.getItem(TOKEN_KEY);
-              }
-              removeToken(): void {
-                if (!isPlatformBrowser(this.platformId)) {
-                    return;
-                }
-                localStorage.removeItem(TOKEN_KEY);
-              }     
-              isLoggedIn(): boolean {
-                return !!this.getToken();
-              }
-              logout(): void {
-                this.removeToken();
-              }
+  getToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  getUser(): LoginResponse | RegisterResponse | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }
+
+  getRole(): string | null {
+    return this.getUser()?.role ?? null;
+  }
+
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
+
+  logout(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
+
+  private saveSession(res: LoginResponse | RegisterResponse): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    localStorage.setItem(TOKEN_KEY, res.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(res));
+  }
 }

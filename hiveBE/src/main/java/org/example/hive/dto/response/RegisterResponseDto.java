@@ -7,10 +7,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public class RegisterResponseDto {
     private String token;
-    private Long userId;
-    private String email;
+    private Long id;
     private String firstName;
     private String lastName;
-    private Long companyId;
-    private String companyName;
+    private String email;
+    private String role;
+    private Boolean active;
 }

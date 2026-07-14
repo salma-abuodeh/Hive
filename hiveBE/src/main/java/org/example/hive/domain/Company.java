@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"users", "roles"})
+@ToString(exclude = {"memberships", "roles"})
 public class Company {
 
     @Id
@@ -35,9 +35,9 @@ public class Company {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<User> users = new ArrayList<>();
+  @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
+@Builder.Default
+private List<UserCompanyMembership> memberships = new ArrayList<>();    
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default

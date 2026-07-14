@@ -40,7 +40,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return new AuthUserPrincipal(
                 user.getId(),
-                user.getCompany().getId(),
+                 null,
                 user.getEmail(),
                 user.getPassword(),
                 Boolean.TRUE.equals(user.getActive()),

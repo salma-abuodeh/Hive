@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { CompanyType } from '../../models/auth.models';
+
 
 @Component({
   selector: 'app-signup',
@@ -34,14 +34,9 @@ export class Signup {
   lastName = '';
   email = '';
   password = '';
-  companyName = '';
-  companyType: CompanyType = 'COMPANY';
-  companyDomain = '';
 
   error = signal('');
   loading = signal(false);
-
-  companyTypes: CompanyType[] = ['COMPANY', 'SCHOOL'];
 
   signup(): void {
     this.loading.set(true);
@@ -52,9 +47,6 @@ export class Signup {
       lastName: this.lastName,
       email: this.email,
       password: this.password,
-      companyName: this.companyName,
-      companyType: this.companyType,
-      companyDomain: this.companyDomain || undefined
     }).subscribe({
       next: () => {
         this.loading.set(false);
