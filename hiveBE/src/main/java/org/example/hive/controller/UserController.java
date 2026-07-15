@@ -11,19 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
-@PreAuthorize("hasRole('COMPANY_ADMIN')")
 public class UserController {
 
     private final UserService userService;
@@ -32,36 +23,87 @@ public class UserController {
         this.userService = userService;
     }
 
+
     @GetMapping
-    public Page<UserResponseDto> list(Pageable pageable,
-                                      @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.list(principal.getCompanyId(), pageable);
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public Page<UserResponseDto> listAll(
+            @RequestParam(required = false) Boolean active,
+            Pageable pageable) {
+        return userService.listAll(active, pageable);
     }
 
     @GetMapping("/{id}")
-    public UserResponseDto getById(@PathVariable Long id,
-                                   @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.getById(id, principal.getCompanyId());
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public UserResponseDto getAsPlatform(@PathVariable Long id) {
+        return userService.getByIdAsPlatform(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponseDto create(@Valid @RequestBody CreateUserRequest req,
-                                  @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.create(req, principal.getCompanyId());
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public UserResponseDto createAsPlatform(@Valid @RequestBody CreateUserRequest req) {
+        return userService.createAsPlatform(req);
     }
 
     @PutMapping("/{id}")
-    public UserResponseDto update(@PathVariable Long id,
-                                    @Valid @RequestBody UpdateUserRequest req,
-                                    @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.update(id, req, principal.getCompanyId(), principal.getUserId());
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public UserResponseDto updateAsPlatform(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest req,
+            @AuthenticationPrincipal AuthUserPrincipal principal) {
+        return userService.updateAsPlatform(id, principal.getUserId(), req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id,
-                         @AuthenticationPrincipal AuthUserPrincipal principal) {
-        userService.delete(id, principal.getCompanyId(), principal.getUserId());
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public void deleteAsPlatform(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AuthUserPrincipal principal) {
+        userService.deleteAsPlatform(id, principal.getUserId());
+    }
+
+    @GetMapping("/company")
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public Page<UserResponseDto> listCompany(
+            @RequestParam(required = false) Boolean active,
+            Pageable pageable,
+            @AuthenticationPrincipal AuthUserPrincipal principal) {
+        return userService.listForCompany(principal, active, pageable);
+    }
+
+    @GetMapping("/company/{id}")
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public UserResponseDto getAsCompany(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AuthUserPrincipal principal) {
+        return userService.getByIdAsCompany(principal, id);
+    }
+
+    @PostMapping("/company")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public UserResponseDto createAsCompany(
+            @Valid @RequestBody CreateUserRequest req,
+            @AuthenticationPrincipal AuthUserPrincipal principal) {
+        return userService.createAsCompany(principal, req);
+    }
+
+    @PutMapping("/company/{id}")
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public UserResponseDto updateAsCompany(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest req,
+            @AuthenticationPrincipal AuthUserPrincipal principal) {
+        return userService.updateAsCompany(principal, id, req);
+    }
+
+    @DeleteMapping("/company/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public void deleteAsCompany(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AuthUserPrincipal principal) {
+        userService.deleteAsCompany(principal, id);
     }
 }

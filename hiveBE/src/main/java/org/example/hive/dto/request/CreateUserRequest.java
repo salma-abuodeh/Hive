@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class CreateUserRequest {
@@ -28,4 +30,6 @@ public class CreateUserRequest {
 
     @NotBlank(message = "Role is required")
     private String roleName;
+
+    private List<Long> companyIds;
 }
