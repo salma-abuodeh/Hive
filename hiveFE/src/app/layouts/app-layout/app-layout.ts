@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrl: './app-layout.css',
 })
 export class AppLayout {
-  private readonly auth = inject(AuthService);
+   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   logout(): void {
     this.auth.logout();

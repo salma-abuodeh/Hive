@@ -56,10 +56,31 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   }
+  isPlatformAdmin(): boolean {
+    return this.normalizeRole(this.getRole()) === 'PLATFORM_ADMIN';
+  }
 
+  isManager(): boolean {
+    return this.normalizeRole(this.getRole()) === 'MANAGER';
+  }
+
+  canManageUsers(): boolean {
+    return this.isPlatformAdmin() || this.isManager();
+  }
+
+  private normalizeRole(role: string | null | undefined): string {
+    if (!role) return '';
+    return role.trim().replace(/\s+/g, '_').toUpperCase();
+  }
   private saveSession(res: LoginResponse | RegisterResponse): void {
     if (!isPlatformBrowser(this.platformId)) return;
     localStorage.setItem(TOKEN_KEY, res.token);
     localStorage.setItem(USER_KEY, JSON.stringify(res));
+  }
+  patchSession(partial: { firstName?: string; lastName?: string; email?: string }): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const current = this.getUser();
+    if (!current) return;
+    localStorage.setItem(USER_KEY, JSON.stringify({ ...current, ...partial }));
   }
 }

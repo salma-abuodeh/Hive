@@ -156,7 +156,7 @@ public class UserService {
     public UserResponseDto createAsCompany(AuthUserPrincipal principal, CreateUserRequest req) {
         Set<Long> mine = companyIdsOf(principal.getUserId());
         if (mine.isEmpty()) {
-            throw new UserException("Company Admin has no company membership", HttpStatus.BAD_REQUEST);
+            throw new UserException("Manager has no company membership", HttpStatus.BAD_REQUEST);
         }
 
         Set<Long> target = (req.getCompanyIds() == null || req.getCompanyIds().isEmpty())
@@ -274,9 +274,11 @@ public class UserService {
         if ("Platform Admin".equalsIgnoreCase(roleName) || "PLATFORM_ADMIN".equalsIgnoreCase(roleName)) {
             throw new UserException("Cannot assign Platform Admin role", HttpStatus.BAD_REQUEST);
         }
-        String name = ("Company Admin".equalsIgnoreCase(roleName) || "COMPANY_ADMIN".equalsIgnoreCase(roleName))
-                ? "Company Admin"
-                : "Employee";
+        boolean isManager = "Manager".equalsIgnoreCase(roleName)
+                || "MANAGER".equalsIgnoreCase(roleName)
+                || "Company Admin".equalsIgnoreCase(roleName)
+                || "COMPANY_ADMIN".equalsIgnoreCase(roleName);
+        String name = isManager ? "Manager" : "Employee";
         return roleRepository.findByNameAndCompanyIsNull(name)
                 .orElseThrow(() -> new UserException("Invalid role", HttpStatus.BAD_REQUEST));
     }

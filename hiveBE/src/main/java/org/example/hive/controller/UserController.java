@@ -64,7 +64,7 @@ public class UserController {
     }
 
     @GetMapping("/company")
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public Page<UserResponseDto> listCompany(
             @RequestParam(required = false) Boolean active,
             Pageable pageable,
@@ -73,7 +73,7 @@ public class UserController {
     }
 
     @GetMapping("/company/{id}")
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public UserResponseDto getAsCompany(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
@@ -82,7 +82,7 @@ public class UserController {
 
     @PostMapping("/company")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public UserResponseDto createAsCompany(
             @Valid @RequestBody CreateUserRequest req,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
@@ -90,7 +90,7 @@ public class UserController {
     }
 
     @PutMapping("/company/{id}")
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public UserResponseDto updateAsCompany(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest req,
@@ -100,7 +100,7 @@ public class UserController {
 
     @DeleteMapping("/company/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public void deleteAsCompany(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {

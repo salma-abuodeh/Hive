@@ -6,6 +6,9 @@
       <a routerLink="/dashboard">Dashboard</a>
       <a routerLink="/community">Community</a>
       <a routerLink="/notifications">Notifications</a>
+      @if (auth.canManageUsers()) {
+        <a routerLink="/users">Users</a>
+      }
     </nav>
   </aside>
 
@@ -18,8 +21,12 @@
 
       <div class="topbar-right">
         <span><a routerLink="/dashboard">Dashboard</a></span>
+        <a routerLink="/community">Community</a>
         <span><a routerLink="/notifications">Notifications</a></span>
         <span><a routerLink="/profile">Profile</a></span>
+        @if (auth.canManageUsers()) {
+          <a routerLink="/users">Users</a>
+        }
         <span><button (click)="logout()">Logout</button></span>
       </div>
     </header>
