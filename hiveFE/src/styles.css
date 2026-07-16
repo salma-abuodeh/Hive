@@ -1,1 +1,109 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --amber: #f5a623;
+  --amber-dark: #d88c0f;
+  --amber-light: #ffe8b8;
+  --umber: #7d5533;
+  --umber-light: #a9805c;
+  --espresso: #3d1c05;
+  --espresso-soft: #52290b;
+  --cream: #fdfcf6;
+  --cream-dim: #f5f1e6;
+  --mist: #e0e4e4;
+  --mist-dark: #c7cdcd;
+  --ink: #241206;
+  --success: #4c7a4a;
+  --error: #b3492f;
+
+  --font-display: 'Space Grotesk', 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.375rem;
+  --fs-xl: 1.75rem;
+  --fs-2xl: 2.25rem;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 16px;
+  --sp-4: 24px;
+  --sp-5: 32px;
+  --sp-6: 48px;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --shadow-sm: 0 2px 8px rgba(61, 28, 5, 0.06);
+  --shadow-md: 0 12px 32px rgba(61, 28, 5, 0.1);
+  --shadow-lg: 0 24px 64px rgba(61, 28, 5, 0.16);
+  --shadow-focus: 0 0 0 3px rgba(245, 166, 35, 0.28);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur-med: 320ms;
+  --dur-slow: 600ms;
+
+  /* Legacy aliases used by older pages */
+  --hive-cream: var(--cream);
+  --hive-ink: var(--espresso);
+  --hive-brown: var(--umber);
+  --hive-gold: var(--amber);
+  --hive-sand: var(--cream-dim);
+  --hive-border: var(--mist);
+  --hive-sidebar: var(--espresso);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-font-smoothing: antialiased; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--espresso);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+a { color: var(--umber); text-decoration: none; }
+a:hover { color: var(--amber-dark); }
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+
+.hex {
+  clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%);
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-14px); }
+}
+
+.rise-in { animation: rise-in var(--dur-slow) var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

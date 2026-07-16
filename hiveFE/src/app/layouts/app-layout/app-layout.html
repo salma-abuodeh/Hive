@@ -1,38 +1,102 @@
-<div class="mainapp">
-  <aside class="sidebar">
-    <p class="logo">Hive</p>
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div class="sidebar-logo">
+      <a routerLink="/dashboard" class="logo-lockup on-dark">
+        <img src="/logo/hive-mark.png" width="34" height="34" alt="Hive">
+      </a>
+    </div>
 
-    <nav>
-      <a routerLink="/dashboard">Dashboard</a>
-      <a routerLink="/community">Community</a>
-      <a routerLink="/notifications">Notifications</a>
+    <div
+      class="sidebar-org-switch"
+      [class.open]="orgMenuOpen()"
+      (click)="toggleOrgMenu($event)"
+    >
+      <div class="hex-frame hex">{{ companyInitials() }}</div>
+      <div class="org-meta">
+        <strong>{{ companyName() }}</strong>
+        <span>Company workspace</span>
+      </div>
+      <span class="switch-caret" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </span>
+
+      @if (orgMenuOpen()) {
+        <div class="org-switch-menu open" (click)="$event.stopPropagation()">
+          <div class="menu-label">Your workspaces</div>
+          <a routerLink="/dashboard" class="current-org" (click)="closeOrgMenuAndNavigate()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            <span>{{ companyName() }}</span>
+          </a>
+          <div class="menu-divider"></div>
+          <a routerLink="/community" (click)="closeOrgMenuAndNavigate()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <span>Join another company</span>
+          </a>
+          <a routerLink="/dashboard" (click)="closeOrgMenuAndNavigate()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 5v14M5 12h14"/></svg>
+            <span>{{ auth.isPlatformAdmin() ? 'Create a company' : 'Apply for a company' }}</span>
+          </a>
+        </div>
+      }
+    </div>
+
+    <div class="sidebar-section-label">Workspace</div>
+    <nav class="sidebar-nav">
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Feed</span>
+      </a>
+      <a routerLink="/community" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><circle cx="17" cy="8.5" r="2.5"/><path d="M15.5 14.5c2.4.4 4 2 4.8 5"/></svg>
+        <span>Community</span>
+      </a>
+      <a routerLink="/notifications" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 004 0"/></svg>
+        <span>Notifications</span>
+      </a>
       @if (auth.canManageUsers()) {
-        <a routerLink="/users">Users</a>
+        <a routerLink="/users" routerLinkActive="active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
+          <span>People</span>
+        </a>
       }
     </nav>
+
+    <div class="sidebar-bottom sidebar-nav">
+      <a routerLink="/profile" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M4 20c1.2-3.8 4-6 8-6s6.8 2.2 8 6"/></svg>
+        <span>My Profile</span>
+      </a>
+      <button type="button" class="sidebar-link-btn" (click)="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        <span>Sign Out</span>
+      </button>
+    </div>
   </aside>
 
-  <div class="page-area">
-<header class="topbar">
-  <div class="topbar-left">
-    <img src="/logo/HiveLogo.png" alt="Hive Logo" class="topbar-logo" />
-    <h2>Hive</h2>
-  </div>
+  <header class="app-header">
+    <div class="header-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" placeholder="Search Hive…" readonly>
+    </div>
+    <div class="header-actions">
+      <a class="icon-btn" routerLink="/notifications" title="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 004 0"/></svg>
+        <span class="badge-dot"></span>
+      </a>
+      <a class="user-menu" routerLink="/profile">
+        <div class="hex-frame hex">{{ userInitials() }}</div>
+        <div class="user-meta">
+          <strong>{{ displayName() }}</strong>
+          <span>{{ roleLabel() }}</span>
+        </div>
+      </a>
+    </div>
+  </header>
 
-      <div class="topbar-right">
-        <span><a routerLink="/dashboard">Dashboard</a></span>
-        <a routerLink="/community">Community</a>
-        <span><a routerLink="/notifications">Notifications</a></span>
-        <span><a routerLink="/profile">Profile</a></span>
-        @if (auth.canManageUsers()) {
-          <a routerLink="/users">Users</a>
-        }
-        <span><button (click)="logout()">Logout</button></span>
-      </div>
-    </header>
-
-    <main class="content">
-      <router-outlet></router-outlet>
-    </main>
-  </div>
+  <main class="app-main">
+    <router-outlet></router-outlet>
+  </main>
 </div>

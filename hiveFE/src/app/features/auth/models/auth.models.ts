@@ -34,6 +34,7 @@ export interface RegisterResponse {
   email: string;
   role: string;
   active: boolean;
+  companies?: CompanySummary[];
 }
 
 export interface ApiError {

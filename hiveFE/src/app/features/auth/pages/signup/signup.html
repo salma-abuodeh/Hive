@@ -1,47 +1,91 @@
-<div class="signup-page">
-    <mat-card class="signup-card">
-      <div class="logo-box">
-        <img src="/logo/HiveLogo.png" alt="Hive Logo" class="logo" />
-        <h1>Hive</h1>
-      </div>
-  
-      <h2>Sign Up</h2>
-  
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>First Name</mat-label>
-        <input matInput [(ngModel)]="firstName">
-      </mat-form-field>
-  
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Last Name</mat-label>
-        <input matInput [(ngModel)]="lastName">
-      </mat-form-field>
-  
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" [(ngModel)]="email">
-      </mat-form-field>
-  
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" [(ngModel)]="password">
-      </mat-form-field>
+<div class="form-head">
+  <h2>Create your account</h2>
+  <p>Let's get your profile set up.</p>
+</div>
 
-      @if (error()) {
-        <p class="error">{{ error() }}</p>
-      }
-  
-      <button mat-raised-button color="primary" class="full-width"
-              [disabled]="loading()" (click)="signup()">
-        @if (loading()) {
-          Signing up...
-        } @else {
-          Sign Up
-        }
-      </button>
-  
-      <p class="link-text">
-        Already have an account? <a routerLink="/login">Log in</a>
-      </p>
-    </mat-card>
+<form (ngSubmit)="signup()">
+  <div class="field">
+    <label for="fullName">Full name</label>
+    <input
+      id="fullName"
+      name="fullName"
+      type="text"
+      [(ngModel)]="fullName"
+      placeholder="Jordan Lee"
+      autocomplete="name"
+      required
+    >
   </div>
+
+  <div class="field">
+    <label for="email">Email address</label>
+    <input
+      id="email"
+      name="email"
+      type="email"
+      [(ngModel)]="email"
+      placeholder="you@company.com"
+      autocomplete="email"
+      required
+    >
+  </div>
+
+  <div class="field">
+    <label for="password">Password</label>
+    <input
+      id="password"
+      name="password"
+      type="password"
+      [(ngModel)]="password"
+      (ngModelChange)="onPasswordChange($event)"
+      placeholder="Create a password"
+      autocomplete="new-password"
+      required
+    >
+    <div class="strength-track">
+      <div class="strength-bar" [style.width.%]="strengthPercent()" [style.background]="strengthColor()"></div>
+    </div>
+    @if (strengthLabel()) {
+      <span class="strength-label">{{ strengthLabel() }}</span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="confirm">Confirm password</label>
+    <input
+      id="confirm"
+      name="confirmPassword"
+      type="password"
+      [(ngModel)]="confirmPassword"
+      placeholder="Re-enter your password"
+      autocomplete="new-password"
+      required
+    >
+  </div>
+
+  <label class="checkbox-row terms">
+    <input type="checkbox" name="terms" [(ngModel)]="acceptedTerms" required>
+    <span>I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a></span>
+  </label>
+
+  @if (error()) {
+    <p class="error-text">{{ error() }}</p>
+  }
+
+  <button
+    class="btn btn-primary"
+    type="submit"
+    [disabled]="loading() || !canSubmit()"
+  >
+    {{ loading() ? 'Creating account…' : 'Create Account' }}
+  </button>
+</form>
+
+<div class="divider">or continue with</div>
+
+<div class="social-row">
+  <button type="button" class="btn btn-social" disabled>Google</button>
+  <button type="button" class="btn btn-social" disabled>Apple</button>
+</div>
+
+<p class="foot-note">Already have an account? <a routerLink="/login">Sign in</a></p>

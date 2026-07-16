@@ -83,4 +83,7 @@ export class AuthService {
     if (!current) return;
     localStorage.setItem(USER_KEY, JSON.stringify({ ...current, ...partial }));
   }
+  replaceSession(res: LoginResponse | RegisterResponse): void {
+    this.saveSession(res);
+  }
 }
