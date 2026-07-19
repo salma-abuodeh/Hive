@@ -5,14 +5,14 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "roles")
+@Table(name = "teams")
 @Getter
 @Setter
 @NoArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true, exclude = {"company"})
-public class Role extends BaseItem {
+public class Team extends BaseItem {
 
     private String description;
 

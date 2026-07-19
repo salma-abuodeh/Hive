@@ -4,6 +4,7 @@ import org.example.hive.model.Company;
 import org.example.hive.model.Role;
 import org.example.hive.model.RoleNames;
 import org.example.hive.model.User;
+import org.example.hive.model.UserCompany;
 import org.example.hive.dto.request.LoginRequestDto;
 import org.example.hive.dto.request.RegisterRequestDto;
 import org.example.hive.dto.response.LoginResponseDto;
@@ -11,6 +12,7 @@ import org.example.hive.dto.response.RegisterResponseDto;
 import org.example.hive.exception.AuthException;
 import org.example.hive.repository.CompanyRepository;
 import org.example.hive.repository.RoleRepository;
+import org.example.hive.repository.UserCompanyRepository;
 import org.example.hive.repository.UserRepository;
 import org.example.hive.security.CustomUserDetailsService;
 import org.example.hive.security.JwtService;
@@ -22,12 +24,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserCompanyRepository userCompanyRepository;
     private final RoleRepository roleRepository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
@@ -36,6 +37,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthService(UserRepository userRepository,
+                       UserCompanyRepository userCompanyRepository,
                        RoleRepository roleRepository,
                        CompanyRepository companyRepository,
                        PasswordEncoder passwordEncoder,
@@ -43,6 +45,7 @@ public class AuthService {
                        CustomUserDetailsService customUserDetailsService,
                        AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
+        this.userCompanyRepository = userCompanyRepository;
         this.roleRepository = roleRepository;
         this.companyRepository = companyRepository;
         this.passwordEncoder = passwordEncoder;
@@ -76,11 +79,10 @@ public class AuthService {
                 .name(req.getCompanyName())
                 .type(req.getCompanyType())
                 .domain(req.getCompanyDomain())
-                .createdAt(LocalDateTime.now())
                 .build();
         company = companyRepository.save(company);
 
-        Role adminRole = roleRepository.findByNameAndCompanyIsNull(RoleNames.COMPANY_ADMIN)
+        Role adminRole = roleRepository.findByNameAndCompanyIsNull(RoleNames.MANAGER)
                 .orElseThrow(() -> new AuthException("Default role not found", HttpStatus.INTERNAL_SERVER_ERROR));
 
         User user = User.builder()
@@ -88,11 +90,15 @@ public class AuthService {
                 .lastName(req.getLastName())
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
-                .createdAt(LocalDateTime.now())
+                .build();
+        user = userRepository.save(user);
+
+        UserCompany membership = UserCompany.builder()
+                .user(user)
                 .company(company)
                 .role(adminRole)
                 .build();
-        userRepository.save(user);
+        userCompanyRepository.save(membership);
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken(userDetails);

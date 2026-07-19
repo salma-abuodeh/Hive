@@ -27,7 +27,7 @@ public class CompanyController {
         this.companyService = companyService;
     }
 
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PreAuthorize("hasRole('PLATFORM_ADMINISTRATOR')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CompanyResponse create(@Valid @RequestBody CompanyRequest req) {
@@ -35,20 +35,20 @@ public class CompanyController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public CompanyResponse getMine(@AuthenticationPrincipal AuthUserPrincipal principal) {
         return companyService.getById(principal.getCompanyId());
     }
 
     @PutMapping("/me")
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public CompanyResponse updateMine(@Valid @RequestBody CompanyRequest req,
                                       @AuthenticationPrincipal AuthUserPrincipal principal) {
         return companyService.update(principal.getCompanyId(), req);
     }
 
     @DeleteMapping("/me")
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void archiveMine(@AuthenticationPrincipal AuthUserPrincipal principal) {
         companyService.archive(principal.getCompanyId());

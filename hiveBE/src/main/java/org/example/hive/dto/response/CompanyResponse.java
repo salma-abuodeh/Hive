@@ -3,7 +3,7 @@ package org.example.hive.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.example.hive.model.CompanyType;
+import org.example.hive.config.AppEnums.CompanyType;
 
 import java.time.LocalDateTime;
 

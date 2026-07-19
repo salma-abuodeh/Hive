@@ -2,8 +2,9 @@ package org.example.hive.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import org.example.hive.config.AppEnums.CompanyType;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,20 +13,10 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"users", "roles"})
-public class Company {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
-    @Column(name = "company_id")
-    private Long id;
-
-    @Column(nullable = false)
-    private String name;
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true, exclude = {"roles"})
+public class Company extends BaseItem {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "company_type", nullable = false)
@@ -40,38 +31,14 @@ public class Company {
     @Column(nullable = false)
     private String status;
 
-    @Column(nullable = false)
-    private Boolean active;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<User> users = new ArrayList<>();
-
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Role> roles = new ArrayList<>();
 
     @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
+    protected void onCompanyCreate() {
         if (this.status == null) {
             this.status = "pending";
         }
-        if (this.active == null) {
-            this.active = true;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 }
