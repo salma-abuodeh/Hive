@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/users")
-@PreAuthorize("hasRole('COMPANY_ADMIN')")
+@PreAuthorize("hasRole('MANAGER')")
 public class UserController {
 
     private final UserService userService;
