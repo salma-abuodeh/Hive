@@ -24,6 +24,7 @@ export interface LoginResponse {
   role: string;
   active: boolean;
   companies: CompanySummary[];
+  permissions: string[];
 }
 
 export interface RegisterResponse {
@@ -35,6 +36,7 @@ export interface RegisterResponse {
   role: string;
   active: boolean;
   companies?: CompanySummary[];
+  permissions?: string[];
 }
 
 export interface ApiError {

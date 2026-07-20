@@ -23,87 +23,86 @@ public class UserController {
         this.userService = userService;
     }
 
-
     @GetMapping
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    public Page<UserResponseDto> listAll(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    public Page<UserResponseDto> listUsersByAdmin(
             @RequestParam(required = false) Boolean active,
             Pageable pageable) {
-        return userService.listAll(active, pageable);
+        return userService.listUsersByAdmin(active, pageable);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    public UserResponseDto getAsPlatform(@PathVariable Long id) {
-        return userService.getByIdAsPlatform(id);
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    public UserResponseDto getUserByAdmin(@PathVariable Long id) {
+        return userService.getUserByAdmin(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    public UserResponseDto createAsPlatform(@Valid @RequestBody CreateUserRequest req) {
-        return userService.createAsPlatform(req);
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    public UserResponseDto createUserByAdmin(@Valid @RequestBody CreateUserRequest req) {
+        return userService.createUserByAdmin(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    public UserResponseDto updateAsPlatform(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    public UserResponseDto updateUserByAdmin(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest req,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.updateAsPlatform(id, principal.getUserId(), req);
+        return userService.updateUserByAdmin(id, principal.getUserId(), req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    public void deleteAsPlatform(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    public void deleteUserByAdmin(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        userService.deleteAsPlatform(id, principal.getUserId());
+        userService.deleteUserByAdmin(id, principal.getUserId());
     }
 
     @GetMapping("/company")
-    @PreAuthorize("hasRole('MANAGER')")
-    public Page<UserResponseDto> listCompany(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_VIEW)")
+    public Page<UserResponseDto> listUsersByManager(
             @RequestParam(required = false) Boolean active,
             Pageable pageable,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.listForCompany(principal, active, pageable);
+        return userService.listUsersByManager(principal, active, pageable);
     }
 
     @GetMapping("/company/{id}")
-    @PreAuthorize("hasRole('MANAGER')")
-    public UserResponseDto getAsCompany(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_VIEW)")
+    public UserResponseDto getUserByManager(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.getByIdAsCompany(principal, id);
+        return userService.getUserByManager(principal, id);
     }
 
     @PostMapping("/company")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('MANAGER')")
-    public UserResponseDto createAsCompany(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_INVITE)")
+    public UserResponseDto createUserByManager(
             @Valid @RequestBody CreateUserRequest req,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.createAsCompany(principal, req);
+        return userService.createUserByManager(principal, req);
     }
 
     @PutMapping("/company/{id}")
-    @PreAuthorize("hasRole('MANAGER')")
-    public UserResponseDto updateAsCompany(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_UPDATE)")
+    public UserResponseDto updateUserByManager(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest req,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return userService.updateAsCompany(principal, id, req);
+        return userService.updateUserByManager(principal, id, req);
     }
 
     @DeleteMapping("/company/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('MANAGER')")
-    public void deleteAsCompany(
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_DEACTIVATE)")
+    public void deleteUserByManager(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        userService.deleteAsCompany(principal, id);
+        userService.deleteUserByManager(principal, id);
     }
 }

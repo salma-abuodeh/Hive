@@ -40,11 +40,10 @@ export class DashboardHome {
 
     if (this.isPlatformAdmin) {
       this.companies.create(payload).subscribe({
-        next: (res) => {
+        next: (company) => {
           this.saving.set(false);
           this.showCompanyForm.set(false);
-          this.auth.replaceSession(res);
-          this.message.set(`${this.companyName} has been created.`);
+          this.message.set(`${company.name} has been created.`);
           this.companyName = '';
           this.companyDomain = '';
         },

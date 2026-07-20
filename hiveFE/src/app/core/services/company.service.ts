@@ -2,12 +2,23 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginResponse } from '../../features/auth/models/auth.models';
 
 export interface CompanyApplicationRequest {
   name: string;
   type: 'COMPANY' | 'SCHOOL';
   domain?: string;
+}
+
+export interface CompanyResponse {
+  id: number;
+  name: string;
+  type: 'COMPANY' | 'SCHOOL';
+  domain?: string;
+  logoUrl?: string;
+  status: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -18,7 +29,7 @@ export class CompanyService {
     return this.http.post<void>(`${environment.apiUrl}/company-applications`, payload);
   }
 
-  create(payload: CompanyApplicationRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${environment.apiUrl}/companies`, payload);
+  create(payload: CompanyApplicationRequest): Observable<CompanyResponse> {
+    return this.http.post<CompanyResponse>(`${environment.apiUrl}/companies`, payload);
   }
 }

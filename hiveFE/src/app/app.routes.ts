@@ -30,9 +30,7 @@ export const routes: Routes = [
       { path: 'community', component: CommunityFeed, canActivate: [authGuard] },
       { path: 'notifications', component: NotificationsHome, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
-      { path: 'users', component: UsersList, canActivate: [authGuard] },
       { path: 'users', component: UsersList, canActivate: [authGuard, adminGuard] },
-
     ]
   },
   {

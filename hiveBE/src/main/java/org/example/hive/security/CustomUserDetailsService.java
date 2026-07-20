@@ -1,6 +1,11 @@
 package org.example.hive.security;
 
-import org.example.hive.domain.User;
+import org.example.hive.model.Permission;
+import org.example.hive.model.Role;
+import org.example.hive.model.User;
+import org.example.hive.model.UserCompany;
+import org.example.hive.repository.RolePermissionRepository;
+import org.example.hive.repository.UserCompanyRepository;
 import org.example.hive.repository.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -10,16 +15,23 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final UserCompanyRepository userCompanyRepository;
+    private final RolePermissionRepository rolePermissionRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository,
+                                    UserCompanyRepository userCompanyRepository,
+                                    RolePermissionRepository rolePermissionRepository) {
         this.userRepository = userRepository;
+        this.userCompanyRepository = userCompanyRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
     }
 
     @Override
@@ -28,23 +40,40 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-        String roleName = "USER";
-        if (user.getRole() != null) {
-            roleName = user.getRole().getName();
+        Set<GrantedAuthority> authorities = new LinkedHashSet<>();
+        Long companyId = null;
+
+        if (user.getPlatformRole() != null) {
+            addPermissions(authorities, user.getPlatformRole());
         }
 
-        String authority = "ROLE_" + roleName.replace(" ", "_").toUpperCase();
+        Optional<UserCompany> membership =
+                userCompanyRepository.findFirstByUser_IdAndActiveTrueOrderByJoinedAtDesc(user.getId());
 
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(authority));
+        if (membership.isPresent()) {
+            UserCompany uc = membership.get();
+            companyId = uc.getCompany().getId();
+            addPermissions(authorities, uc.getRole());
+        }
 
         return new AuthUserPrincipal(
                 user.getId(),
-                 null,
+                companyId,
                 user.getEmail(),
                 user.getPassword(),
                 Boolean.TRUE.equals(user.getActive()),
                 authorities
         );
+    }
+
+    private void addPermissions(Set<GrantedAuthority> authorities, Role role) {
+        if (role == null || role.getId() == null) {
+            return;
+        }
+        for (Permission permission : rolePermissionRepository.findActivePermissionsByRoleId(role.getId())) {
+            if (permission.getName() != null && !permission.getName().isBlank()) {
+                authorities.add(new SimpleGrantedAuthority(permission.getName()));
+            }
+        }
     }
 }

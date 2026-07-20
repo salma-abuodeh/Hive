@@ -47,6 +47,14 @@ export class AuthService {
     return this.getUser()?.role ?? null;
   }
 
+  getPermissions(): string[] {
+    return this.getUser()?.permissions ?? [];
+  }
+
+  hasPermission(permission: string): boolean {
+    return this.getPermissions().includes(permission);
+  }
+
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
@@ -56,22 +64,19 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   }
+
   isPlatformAdmin(): boolean {
-    return this.normalizeRole(this.getRole()) === 'PLATFORM_ADMIN';
+    return this.hasPermission('PLATFORM_MANAGE');
   }
 
   isManager(): boolean {
-    return this.normalizeRole(this.getRole()) === 'MANAGER';
+    return this.hasPermission('USER_VIEW') && !this.isPlatformAdmin();
   }
 
   canManageUsers(): boolean {
-    return this.isPlatformAdmin() || this.isManager();
+    return this.hasPermission('USER_VIEW') || this.hasPermission('PLATFORM_MANAGE');
   }
 
-  private normalizeRole(role: string | null | undefined): string {
-    if (!role) return '';
-    return role.trim().replace(/\s+/g, '_').toUpperCase();
-  }
   private saveSession(res: LoginResponse | RegisterResponse): void {
     if (!isPlatformBrowser(this.platformId)) return;
     localStorage.setItem(TOKEN_KEY, res.token);

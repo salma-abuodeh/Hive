@@ -61,4 +61,11 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(400, message, LocalDateTime.now()));
     }
+
+    @ExceptionHandler(CompanyException.class)
+    public ResponseEntity<ErrorResponseDto> handleCompanyException(CompanyException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
 }

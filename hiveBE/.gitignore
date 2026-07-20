@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### macOS / Windows ###
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+Desktop.ini

@@ -3,6 +3,8 @@ package org.example.hive.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 public class RegisterResponseDto {
@@ -13,4 +15,5 @@ public class RegisterResponseDto {
     private String email;
     private String role;
     private Boolean active;
+    private List<String> permissions;
 }

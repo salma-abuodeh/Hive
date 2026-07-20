@@ -1,16 +1,15 @@
 package org.example.hive.service;
 
-import org.example.hive.domain.Company;
-import org.example.hive.domain.Role;
-import org.example.hive.domain.User;
-import org.example.hive.domain.UserCompanyMembership;
 import org.example.hive.dto.request.CreateUserRequest;
 import org.example.hive.dto.request.UpdateMeRequest;
 import org.example.hive.dto.request.UpdateUserRequest;
 import org.example.hive.dto.response.UserResponseDto;
 import org.example.hive.exception.UserException;
 import org.example.hive.mapper.UserMapper;
-import org.example.hive.repository.CompanyRepository;
+import org.example.hive.model.Role;
+import org.example.hive.model.RoleNames;
+import org.example.hive.model.User;
+import org.example.hive.model.UserCompany;
 import org.example.hive.repository.RoleRepository;
 import org.example.hive.repository.UserRepository;
 import org.example.hive.security.AuthUserPrincipal;
@@ -21,26 +20,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
-    private final CompanyRepository companyRepository;
+    private final UserCompanyService userCompanyService;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository,
-                       CompanyRepository companyRepository,
+                       UserCompanyService userCompanyService,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.companyRepository = companyRepository;
+        this.userCompanyService = userCompanyService;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -49,7 +46,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponseDto getMe(Long userId) {
-        return UserMapper.toResponse(requireUser(userId));
+        User user = requireUser(userId);
+        List<UserCompany> memberships = userCompanyService.listActiveForUser(userId);
+        if (!memberships.isEmpty()) {
+            return UserMapper.toResponse(memberships.get(0));
+        }
+        return UserMapper.toResponse(user);
     }
 
     @Transactional
@@ -68,8 +70,12 @@ public class UserService {
             }
         }
 
-        if (req.getFirstName() != null) user.setFirstName(req.getFirstName());
-        if (req.getLastName() != null) user.setLastName(req.getLastName());
+        if (req.getFirstName() != null) {
+            user.setFirstName(req.getFirstName());
+        }
+        if (req.getLastName() != null) {
+            user.setLastName(req.getLastName());
+        }
 
         if (changingEmail) {
             if (userRepository.existsByEmailAndIdNot(req.getEmail(), userId)) {
@@ -81,13 +87,18 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(req.getPassword()));
         }
 
-        return UserMapper.toResponse(userRepository.save(user));
+        user = userRepository.save(user);
+        List<UserCompany> memberships = userCompanyService.listActiveForUser(userId);
+        if (!memberships.isEmpty()) {
+            return UserMapper.toResponse(memberships.get(0));
+        }
+        return UserMapper.toResponse(user);
     }
 
-    // ===================== PLATFORM ADMIN =====================
+    // ===================== BY ADMIN =====================
 
     @Transactional(readOnly = true)
-    public Page<UserResponseDto> listAll(Boolean active, Pageable pageable) {
+    public Page<UserResponseDto> listUsersByAdmin(Boolean active, Pageable pageable) {
         Page<User> page = active == null
                 ? userRepository.findAll(pageable)
                 : userRepository.findAllByActive(active, pageable);
@@ -95,66 +106,80 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserResponseDto getByIdAsPlatform(Long id) {
+    public UserResponseDto getUserByAdmin(Long id) {
         return UserMapper.toResponse(requireUser(id));
     }
 
     @Transactional
-    public UserResponseDto createAsPlatform(CreateUserRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new UserException("Email already exists", HttpStatus.CONFLICT);
-        }
-
-        Role role = assignableRole(req.getRoleName());
+    public UserResponseDto createUserByAdmin(CreateUserRequest req) {
+        Role role = resolveAssignableRole(req.getRoleName());
         Set<Long> companyIds = req.getCompanyIds() == null
                 ? Set.of()
                 : new HashSet<>(req.getCompanyIds());
 
-        User user = newUser(req, role);
-        addMemberships(user, companyIds);
+        User user = userRepository.findByEmail(req.getEmail()).orElse(null);
+        if (user == null) {
+            user = newUser(req);
+            user = userRepository.save(user);
+        } else if (companyIds.isEmpty()) {
+            throw new UserException("Email already exists", HttpStatus.CONFLICT);
+        }
 
-        return UserMapper.toResponse(userRepository.save(user));
+        UserCompany last = null;
+        for (Long companyId : companyIds) {
+            last = userCompanyService.add(user, companyId, role);
+        }
+
+        if (last != null) {
+            return UserMapper.toResponse(last);
+        }
+        return UserMapper.toResponse(user);
     }
 
     @Transactional
-    public UserResponseDto updateAsPlatform(Long id, Long currentUserId, UpdateUserRequest req) {
+    public UserResponseDto updateUserByAdmin(Long id, Long currentUserId, UpdateUserRequest req) {
         blockSelfDeactivate(currentUserId, id, req);
         User user = requireUser(id);
-        applyUpdate(user, id, req);
-        return UserMapper.toResponse(userRepository.save(user));
+        applyUserFields(user, id, req, true);
+
+        if (req.getRoleName() != null) {
+            userCompanyService.updateRoleOnActiveMemberships(user.getId(), resolveAssignableRole(req.getRoleName()));
+        }
+
+        user = userRepository.save(user);
+        return UserMapper.toResponse(user);
     }
 
     @Transactional
-    public void deleteAsPlatform(Long id, Long currentUserId) {
+    public void deleteUserByAdmin(Long id, Long currentUserId) {
         blockSelfDelete(currentUserId, id);
         if (!userRepository.existsById(id)) {
             throw new UserException("User not found", HttpStatus.NOT_FOUND);
         }
+        userCompanyService.deleteAllForUser(id);
         userRepository.deleteById(id);
     }
 
-    // ===================== COMPANY ADMIN =====================
+    // ===================== BY MANAGER =====================
 
     @Transactional(readOnly = true)
-    public Page<UserResponseDto> listForCompany(AuthUserPrincipal principal, Boolean active, Pageable pageable) {
-        Set<Long> companyIds = companyIdsOf(principal.getUserId());
+    public Page<UserResponseDto> listUsersByManager(AuthUserPrincipal principal, Boolean active, Pageable pageable) {
+        Set<Long> companyIds = userCompanyService.companyIdsOf(principal);
         if (companyIds.isEmpty()) {
             return Page.empty(pageable);
         }
-        Page<User> page = active == null
-                ? userRepository.findMembersInCompanies(companyIds, pageable)
-                : userRepository.findMembersInCompaniesAndActive(companyIds, active, pageable);
-        return page.map(UserMapper::toResponse);
+        return userCompanyService.pageByCompanies(companyIds, active, pageable)
+                .map(UserMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public UserResponseDto getByIdAsCompany(AuthUserPrincipal principal, Long id) {
-        return UserMapper.toResponse(requireInCompanies(principal.getUserId(), id));
+    public UserResponseDto getUserByManager(AuthUserPrincipal principal, Long id) {
+        return UserMapper.toResponse(userCompanyService.requireInPrincipalCompanies(principal, id));
     }
 
     @Transactional
-    public UserResponseDto createAsCompany(AuthUserPrincipal principal, CreateUserRequest req) {
-        Set<Long> mine = companyIdsOf(principal.getUserId());
+    public UserResponseDto createUserByManager(AuthUserPrincipal principal, CreateUserRequest req) {
+        Set<Long> mine = userCompanyService.companyIdsOf(principal);
         if (mine.isEmpty()) {
             throw new UserException("Manager has no company membership", HttpStatus.BAD_REQUEST);
         }
@@ -169,60 +194,70 @@ public class UserService {
             }
         }
 
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new UserException("Email already exists", HttpStatus.CONFLICT);
+        Role role = resolveAssignableRole(req.getRoleName());
+        User user = userRepository.findByEmail(req.getEmail()).orElse(null);
+
+        if (user == null) {
+            user = newUser(req);
+            user = userRepository.save(user);
         }
 
-        Role role = assignableRole(req.getRoleName());
-        User user = newUser(req, role);
-        addMemberships(user, target);
+        UserCompany last = null;
+        for (Long companyId : target) {
+            last = userCompanyService.add(user, companyId, role);
+        }
 
-        return UserMapper.toResponse(userRepository.save(user));
+        if (last == null) {
+            throw new UserException("No company membership created", HttpStatus.BAD_REQUEST);
+        }
+        return UserMapper.toResponse(last);
     }
 
     @Transactional
-    public UserResponseDto updateAsCompany(AuthUserPrincipal principal, Long id, UpdateUserRequest req) {
+    public UserResponseDto updateUserByManager(AuthUserPrincipal principal, Long id, UpdateUserRequest req) {
         blockSelfDeactivate(principal.getUserId(), id, req);
-        User user = requireInCompanies(principal.getUserId(), id);
-        applyUpdate(user, id, req);
-        return UserMapper.toResponse(userRepository.save(user));
+        UserCompany membership = userCompanyService.requireInPrincipalCompanies(principal, id);
+        User user = membership.getUser();
+
+        applyUserFields(user, id, req, false);
+        userRepository.save(user);
+
+        if (req.getRoleName() != null) {
+            membership.setRole(resolveAssignableRole(req.getRoleName()));
+        }
+        if (req.getActive() != null) {
+            membership.setActive(req.getActive());
+        }
+
+        return UserMapper.toResponse(userCompanyService.save(membership));
     }
 
     @Transactional
-    public void deleteAsCompany(AuthUserPrincipal principal, Long id) {
+    public void deleteUserByManager(AuthUserPrincipal principal, Long id) {
         blockSelfDelete(principal.getUserId(), id);
-        User user = requireInCompanies(principal.getUserId(), id);
-        userRepository.delete(user);
+        UserCompany membership = userCompanyService.requireInPrincipalCompanies(principal, id);
+        userCompanyService.deactivate(membership);
     }
 
+    // ===================== helpers =====================
 
-    private User newUser(CreateUserRequest req, Role role) {
+    private User newUser(CreateUserRequest req) {
         return User.builder()
                 .firstName(req.getFirstName())
                 .lastName(req.getLastName())
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
-                .createdAt(LocalDateTime.now())
-                .role(role)
                 .active(true)
                 .build();
     }
 
-    private void addMemberships(User user, Set<Long> companyIds) {
-        for (Long companyId : companyIds) {
-            Company company = companyRepository.findById(companyId)
-                    .orElseThrow(() -> new UserException("Company not found: " + companyId, HttpStatus.NOT_FOUND));
-            user.getMemberships().add(UserCompanyMembership.builder()
-                    .user(user)
-                    .company(company)
-                    .createdAt(LocalDateTime.now())
-                    .build());
+    private void applyUserFields(User user, Long id, UpdateUserRequest req, boolean applyActive) {
+        if (req.getFirstName() != null) {
+            user.setFirstName(req.getFirstName());
         }
-    }
-
-    private void applyUpdate(User user, Long id, UpdateUserRequest req) {
-        if (req.getFirstName() != null) user.setFirstName(req.getFirstName());
-        if (req.getLastName() != null) user.setLastName(req.getLastName());
+        if (req.getLastName() != null) {
+            user.setLastName(req.getLastName());
+        }
         if (req.getEmail() != null && !req.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmailAndIdNot(req.getEmail(), id)) {
                 throw new UserException("Email already exists", HttpStatus.CONFLICT);
@@ -232,10 +267,7 @@ public class UserService {
         if (req.getPassword() != null) {
             user.setPassword(passwordEncoder.encode(req.getPassword()));
         }
-        if (req.getRoleName() != null) {
-            user.setRole(assignableRole(req.getRoleName()));
-        }
-        if (req.getActive() != null) {
+        if (applyActive && req.getActive() != null) {
             user.setActive(req.getActive());
         }
     }
@@ -257,28 +289,23 @@ public class UserService {
                 .orElseThrow(() -> new UserException("User not found", HttpStatus.NOT_FOUND));
     }
 
-    private User requireInCompanies(Long adminUserId, Long targetId) {
-        Set<Long> companyIds = companyIdsOf(adminUserId);
-        return userRepository.findByIdInCompanies(targetId, companyIds)
-                .orElseThrow(() -> new UserException("User not found", HttpStatus.NOT_FOUND));
-    }
+    private Role resolveAssignableRole(String roleName) {
+        if (roleName == null || roleName.isBlank()) {
+            throw new UserException("Role is required", HttpStatus.BAD_REQUEST);
+        }
 
-    private Set<Long> companyIdsOf(Long userId) {
-        User user = requireUser(userId);
-        return user.getMemberships().stream()
-                .map(m -> m.getCompany().getId())
-                .collect(Collectors.toSet());
-    }
-
-    private Role assignableRole(String roleName) {
-        if ("Platform Admin".equalsIgnoreCase(roleName) || "PLATFORM_ADMIN".equalsIgnoreCase(roleName)) {
+        String normalized = roleName.trim().replace(' ', '_').toUpperCase();
+        if ("PLATFORM_ADMIN".equals(normalized)
+                || "PLATFORM_ADMINISTRATOR".equals(normalized)
+                || RoleNames.PLATFORM_ADMIN.equalsIgnoreCase(roleName)) {
             throw new UserException("Cannot assign Platform Admin role", HttpStatus.BAD_REQUEST);
         }
-        boolean isManager = "Manager".equalsIgnoreCase(roleName)
-                || "MANAGER".equalsIgnoreCase(roleName)
-                || "Company Admin".equalsIgnoreCase(roleName)
-                || "COMPANY_ADMIN".equalsIgnoreCase(roleName);
-        String name = isManager ? "Manager" : "Employee";
+
+        boolean isManager = "MANAGER".equals(normalized)
+                || "COMPANY_ADMIN".equals(normalized)
+                || RoleNames.MANAGER.equalsIgnoreCase(roleName);
+        String name = isManager ? RoleNames.MANAGER : RoleNames.EMPLOYEE;
+
         return roleRepository.findByNameAndCompanyIsNull(name)
                 .orElseThrow(() -> new UserException("Invalid role", HttpStatus.BAD_REQUEST));
     }

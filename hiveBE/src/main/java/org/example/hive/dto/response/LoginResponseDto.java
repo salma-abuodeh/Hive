@@ -16,4 +16,5 @@ public class LoginResponseDto {
     private String role;
     private Boolean active;
     private List<CompanySummaryDto> companies;
+    private List<String> permissions;
 }
