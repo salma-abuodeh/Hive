@@ -35,6 +35,7 @@ export class UsersList implements OnInit {
   title = signal('Users');
 
   readonly showCreate = signal(false);
+  readonly showEdit = signal(false);
   readonly showTitles = signal(false);
 
   firstName = '';
@@ -120,7 +121,13 @@ export class UsersList implements OnInit {
     return this.jobTitles().filter((t) => t.active);
   }
 
+  editingUser(): UserResponse | null {
+    if (this.editingId == null) return null;
+    return this.users().find((u) => u.id === this.editingId) ?? null;
+  }
+
   openCreate(): void {
+    this.closeEdit();
     this.formError.set('');
     this.firstName = '';
     this.lastName = '';
@@ -243,6 +250,7 @@ export class UsersList implements OnInit {
   }
 
   startEdit(u: UserResponse): void {
+    this.closeCreate();
     this.editingId = u.id;
     this.editFirstName = u.firstName;
     this.editLastName = u.lastName;
@@ -253,10 +261,18 @@ export class UsersList implements OnInit {
     this.editJobTitleId = u.jobTitleId ?? null;
     this.editTeamIds = (u.teams ?? []).map((t) => t.id);
     this.formError.set('');
+    this.showEdit.set(true);
+  }
+
+  closeEdit(): void {
+    this.showEdit.set(false);
+    this.editingId = null;
+    this.formError.set('');
+    this.saving.set(false);
   }
 
   cancelEdit(): void {
-    this.editingId = null;
+    this.closeEdit();
   }
 
   saveEdit(): void {
@@ -285,7 +301,7 @@ export class UsersList implements OnInit {
     request.subscribe({
       next: () => {
         this.saving.set(false);
-        this.editingId = null;
+        this.closeEdit();
         this.showToast('User updated');
         this.load();
       },
@@ -302,7 +318,10 @@ export class UsersList implements OnInit {
       ? this.userService.update(u.id, payload)
       : this.userService.updateCompanyUser(u.id, payload);
     request.subscribe({
-      next: () => this.load(),
+      next: () => {
+        this.showToast(u.active ? 'User deactivated' : 'User activated');
+        this.load();
+      },
       error: (err) => this.formError.set(err.error?.message ?? 'Status update failed'),
     });
   }

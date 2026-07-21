@@ -338,14 +338,24 @@ public class UserService {
     }
 
     private void syncTeams(User user, Long companyId, List<Long> teamIds) {
-        List<UserTeam> existing = userTeamRepository.findAllByUser_IdAndTeam_Company_Id(user.getId(), companyId);
-        userTeamRepository.deleteAll(existing);
-
-        Set<Long> unique = new HashSet<>();
+        Set<Long> desired = new HashSet<>();
         for (Long teamId : teamIds) {
-            if (teamId == null || !unique.add(teamId)) {
-                continue;
+            if (teamId != null) {
+                desired.add(teamId);
             }
+        }
+
+        List<UserTeam> existing = userTeamRepository.findAllByUser_IdAndTeam_Company_Id(user.getId(), companyId);
+        for (UserTeam membership : existing) {
+            Long currentTeamId = membership.getTeam().getId();
+            if (desired.remove(currentTeamId)) {
+                continue; // already on this team
+            }
+            userTeamRepository.delete(membership);
+        }
+        userTeamRepository.flush();
+
+        for (Long teamId : desired) {
             Team team = teamRepository.findByIdAndCompany_IdAndActiveTrue(teamId, companyId)
                     .orElseThrow(() -> new UserException("Team not found: " + teamId, HttpStatus.BAD_REQUEST));
             userTeamRepository.save(UserTeam.builder()
