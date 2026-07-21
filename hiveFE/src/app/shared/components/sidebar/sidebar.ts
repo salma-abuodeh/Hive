@@ -17,7 +17,9 @@ export class Sidebar {
   readonly orgMenuOpen = signal(false);
 
   private readonly workspaceItems: NavMenuItem[] = [
-    { name: 'Feed', url: '/dashboard', icon: 'feed' },
+    { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
+    { name: 'Feed', url: '/feed', icon: 'feed' },
+    { name: 'Saved', url: '/saved', icon: 'saved' },
     { name: 'Community', url: '/community', icon: 'community' },
     { name: 'Notifications', url: '/notifications', icon: 'notifications' },
     { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },

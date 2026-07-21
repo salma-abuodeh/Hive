@@ -1,0 +1,44 @@
+<section class="saved">
+  <header class="saved-header rise-in">
+    <div>
+      <h1>Saved items</h1>
+      <p>Posts you've bookmarked for later.</p>
+    </div>
+  </header>
+
+  @if (toast()) {
+    <div class="toast" role="status">{{ toast() }}</div>
+  }
+
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+
+  <div class="post-list">
+    @for (post of posts(); track post.id) {
+      <app-post-card
+        [post]="post"
+        (likeToggle)="onLikeToggle($event)"
+        (saveToggle)="onSaveToggle($event)"
+        (share)="onShare($event)"
+        (edit)="onEdit($event)"
+        (remove)="onDelete($event)"
+      />
+    } @empty {
+      @if (!loading()) {
+        <div class="empty">
+          <h2>Nothing saved yet</h2>
+          <p>Tap the bookmark on a post in the feed to save it here.</p>
+        </div>
+      }
+    }
+  </div>
+
+  @if (!lastPage()) {
+    <button type="button" class="load-more" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Loading…' : 'Load more' }}
+    </button>
+  } @else if (loading() && posts().length === 0) {
+    <p class="loading-label">Loading saved posts…</p>
+  }
+</section>

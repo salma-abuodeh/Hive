@@ -1,0 +1,61 @@
+<section class="detail">
+  <a routerLink="/feed" class="back">← Back to feed</a>
+
+  @if (toast()) {
+    <div class="toast" role="status">{{ toast() }}</div>
+  }
+
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="loading-label">Loading post…</p>
+  } @else if (post(); as current) {
+    <app-post-card
+      [post]="current"
+      (likeToggle)="onLikeToggle($event)"
+      (saveToggle)="onSaveToggle($event)"
+      (share)="onShare($event)"
+      (edit)="onEdit($event)"
+      (remove)="onDelete($event)"
+    />
+
+    <section class="comments rise-in">
+      <h2>Comments</h2>
+
+      <form class="comment-form" (ngSubmit)="submitComment()">
+        <textarea
+          [(ngModel)]="commentText"
+          name="commentText"
+          rows="2"
+          maxlength="2000"
+          placeholder="Write a comment..."
+        ></textarea>
+        <button type="submit" [disabled]="!commentText.trim() || submitting()">
+          {{ submitting() ? 'Posting…' : 'Comment' }}
+        </button>
+      </form>
+
+      <ul class="comment-list">
+        @for (comment of comments(); track comment.id) {
+          <li>
+            <span class="hex avatar">{{ initials(comment) }}</span>
+            <div class="comment-body">
+              <div class="comment-head">
+                <strong>{{ comment.authorFirstName }} {{ comment.authorLastName }}</strong>
+                <time>{{ comment.createdAt | date: 'MMM d, y · h:mm a' }}</time>
+                @if (comment.ownedByMe) {
+                  <button type="button" class="text-btn" (click)="deleteComment(comment)">Delete</button>
+                }
+              </div>
+              <p>{{ comment.content }}</p>
+            </div>
+          </li>
+        } @empty {
+          <li class="empty-comments">No comments yet. Start the conversation.</li>
+        }
+      </ul>
+    </section>
+  }
+</section>

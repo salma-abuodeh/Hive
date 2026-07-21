@@ -1,0 +1,76 @@
+<section class="feed">
+  <header class="feed-header rise-in">
+    <div>
+      <h1>Home feed</h1>
+      <p>What's happening across {{ companyLabel() }}.</p>
+    </div>
+  </header>
+
+  @if (toast()) {
+    <div class="toast" role="status">{{ toast() }}</div>
+  }
+
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+
+  <form class="composer rise-in" (ngSubmit)="publish()">
+    <div class="composer-row">
+      <span class="hex avatar">{{ initials() }}</span>
+      <textarea
+        [(ngModel)]="content"
+        name="content"
+        rows="3"
+        maxlength="10000"
+        [placeholder]="editingId() ? 'Update your post...' : 'Share something with your team...'"
+      ></textarea>
+    </div>
+
+    <div class="composer-actions">
+      <label class="visibility">
+        <span class="sr-only">Visibility</span>
+        <select [(ngModel)]="visibilityType" name="visibilityType">
+          <option value="COMPANY">Everyone at {{ companyLabel() }}</option>
+          <option value="TEAM">Team only</option>
+        </select>
+      </label>
+
+      <div class="composer-buttons">
+        @if (editingId()) {
+          <button type="button" class="ghost-btn" (click)="cancelEdit()">Cancel</button>
+        }
+        <button type="submit" class="publish-btn" [disabled]="!content.trim() || publishing()">
+          {{ publishing() ? 'Saving…' : editingId() ? 'Save changes' : 'Publish' }}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="post-list">
+    @for (post of posts(); track post.id) {
+      <app-post-card
+        [post]="post"
+        (likeToggle)="onLikeToggle($event)"
+        (saveToggle)="onSaveToggle($event)"
+        (share)="onShare($event)"
+        (edit)="onEdit($event)"
+        (remove)="onDelete($event)"
+      />
+    } @empty {
+      @if (!loading()) {
+        <div class="empty">
+          <h2>No posts yet</h2>
+          <p>Be the first to share something with your team.</p>
+        </div>
+      }
+    }
+  </div>
+
+  @if (!lastPage()) {
+    <button type="button" class="load-more" (click)="loadFeed()" [disabled]="loading()">
+      {{ loading() ? 'Loading…' : 'Load more' }}
+    </button>
+  } @else if (loading() && posts().length === 0) {
+    <p class="loading-label">Loading feed…</p>
+  }
+</section>
