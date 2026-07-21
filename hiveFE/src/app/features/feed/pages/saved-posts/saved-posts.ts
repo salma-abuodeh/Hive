@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { PostCard } from '../../components/post-card/post-card';
 import { Post } from '../../models/post.models';
@@ -13,6 +14,7 @@ import { PostService } from '../../services/post.service';
 export class SavedPosts implements OnInit {
   private readonly postsApi = inject(PostService);
   private readonly router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
 
   readonly posts = signal<Post[]>([]);
   readonly loading = signal(false);
@@ -22,6 +24,7 @@ export class SavedPosts implements OnInit {
   readonly lastPage = signal(true);
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     this.load(true);
   }
 

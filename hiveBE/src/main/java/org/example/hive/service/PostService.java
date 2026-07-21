@@ -346,7 +346,8 @@ public class PostService {
         }
         Team team = teamRepository.findByIdAndCompany_IdAndActiveTrue(teamId, companyId)
                 .orElseThrow(() -> new PostException("Team not found", HttpStatus.NOT_FOUND));
-        if (!userTeamRepository.existsByUser_IdAndTeam_Id(userId, teamId)) {
+        boolean member = userTeamRepository.existsByUser_IdAndTeam_Id(userId, teamId);
+        if (!member) {
             throw new PostException("You must be a member of the team", HttpStatus.FORBIDDEN);
         }
         return team;

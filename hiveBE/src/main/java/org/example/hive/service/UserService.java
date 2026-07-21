@@ -3,15 +3,21 @@ package org.example.hive.service;
 import org.example.hive.dto.request.CreateUserRequest;
 import org.example.hive.dto.request.UpdateMeRequest;
 import org.example.hive.dto.request.UpdateUserRequest;
+import org.example.hive.dto.response.TeamSummaryDto;
 import org.example.hive.dto.response.UserResponseDto;
 import org.example.hive.exception.UserException;
 import org.example.hive.mapper.UserMapper;
+import org.example.hive.model.CompanyJobTitle;
 import org.example.hive.model.Role;
 import org.example.hive.model.RoleNames;
+import org.example.hive.model.Team;
 import org.example.hive.model.User;
 import org.example.hive.model.UserCompany;
+import org.example.hive.model.UserTeam;
 import org.example.hive.repository.RoleRepository;
+import org.example.hive.repository.TeamRepository;
 import org.example.hive.repository.UserRepository;
+import org.example.hive.repository.UserTeamRepository;
 import org.example.hive.security.AuthUserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,31 +38,43 @@ public class UserService {
     private final UserCompanyService userCompanyService;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JobTitleService jobTitleService;
+    private final TeamRepository teamRepository;
+    private final UserTeamRepository userTeamRepository;
 
     public UserService(UserRepository userRepository,
                        UserCompanyService userCompanyService,
                        RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       JobTitleService jobTitleService,
+                       TeamRepository teamRepository,
+                       UserTeamRepository userTeamRepository) {
         this.userRepository = userRepository;
         this.userCompanyService = userCompanyService;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jobTitleService = jobTitleService;
+        this.teamRepository = teamRepository;
+        this.userTeamRepository = userTeamRepository;
     }
 
     // ===================== ME =====================
 
     @Transactional(readOnly = true)
-    public UserResponseDto getMe(Long userId) {
-        User user = requireUser(userId);
-        List<UserCompany> memberships = userCompanyService.listActiveForUser(userId);
-        if (!memberships.isEmpty()) {
-            return UserMapper.toResponse(memberships.get(0));
+    public UserResponseDto getMe(AuthUserPrincipal principal) {
+        User user = requireUser(principal.getUserId());
+        UserCompany membership = resolveMembership(principal);
+        if (membership != null) {
+            return UserMapper.toResponse(
+                    membership,
+                    teamSummaries(principal.getUserId(), membership.getCompany().getId()));
         }
         return UserMapper.toResponse(user);
     }
 
     @Transactional
-    public UserResponseDto updateMe(Long userId, UpdateMeRequest req) {
+    public UserResponseDto updateMe(AuthUserPrincipal principal, UpdateMeRequest req) {
+        Long userId = principal.getUserId();
         User user = requireUser(userId);
 
         boolean changingEmail = req.getEmail() != null && !req.getEmail().equals(user.getEmail());
@@ -88,9 +107,11 @@ public class UserService {
         }
 
         user = userRepository.save(user);
-        List<UserCompany> memberships = userCompanyService.listActiveForUser(userId);
-        if (!memberships.isEmpty()) {
-            return UserMapper.toResponse(memberships.get(0));
+        UserCompany membership = resolveMembership(principal);
+        if (membership != null) {
+            return UserMapper.toResponse(
+                    membership,
+                    teamSummaries(userId, membership.getCompany().getId()));
         }
         return UserMapper.toResponse(user);
     }
@@ -128,10 +149,16 @@ public class UserService {
         UserCompany last = null;
         for (Long companyId : companyIds) {
             last = userCompanyService.add(user, companyId, role);
+            applyJobTitle(user, last, req.getJobTitleId(), companyId);
+            if (req.getTeamIds() != null) {
+                syncTeams(user, companyId, req.getTeamIds());
+            }
         }
 
+        user = userRepository.save(user);
+
         if (last != null) {
-            return UserMapper.toResponse(last);
+            return UserMapper.toResponse(last, teamSummaries(user.getId(), last.getCompany().getId()));
         }
         return UserMapper.toResponse(user);
     }
@@ -144,6 +171,20 @@ public class UserService {
 
         if (req.getRoleName() != null) {
             userCompanyService.updateRoleOnActiveMemberships(user.getId(), resolveAssignableRole(req.getRoleName()));
+        }
+
+        List<UserCompany> memberships = userCompanyService.listActiveForUser(user.getId());
+        if (!memberships.isEmpty()) {
+            UserCompany membership = memberships.get(0);
+            if (req.getJobTitleId() != null) {
+                applyJobTitle(user, membership, req.getJobTitleId(), membership.getCompany().getId());
+                userCompanyService.save(membership);
+            }
+            if (req.getTeamIds() != null) {
+                syncTeams(user, membership.getCompany().getId(), req.getTeamIds());
+            }
+            user = userRepository.save(user);
+            return UserMapper.toResponse(membership, teamSummaries(user.getId(), membership.getCompany().getId()));
         }
 
         user = userRepository.save(user);
@@ -169,12 +210,13 @@ public class UserService {
             return Page.empty(pageable);
         }
         return userCompanyService.pageByCompanies(companyIds, active, pageable)
-                .map(UserMapper::toResponse);
+                .map(uc -> UserMapper.toResponse(uc, teamSummaries(uc.getUser().getId(), uc.getCompany().getId())));
     }
 
     @Transactional(readOnly = true)
     public UserResponseDto getUserByManager(AuthUserPrincipal principal, Long id) {
-        return UserMapper.toResponse(userCompanyService.requireInPrincipalCompanies(principal, id));
+        UserCompany membership = userCompanyService.requireInPrincipalCompanies(principal, id);
+        return UserMapper.toResponse(membership, teamSummaries(id, membership.getCompany().getId()));
     }
 
     @Transactional
@@ -205,12 +247,17 @@ public class UserService {
         UserCompany last = null;
         for (Long companyId : target) {
             last = userCompanyService.add(user, companyId, role);
+            applyJobTitle(user, last, req.getJobTitleId(), companyId);
+            if (req.getTeamIds() != null) {
+                syncTeams(user, companyId, req.getTeamIds());
+            }
         }
 
         if (last == null) {
             throw new UserException("No company membership created", HttpStatus.BAD_REQUEST);
         }
-        return UserMapper.toResponse(last);
+        userRepository.save(user);
+        return UserMapper.toResponse(last, teamSummaries(user.getId(), last.getCompany().getId()));
     }
 
     @Transactional
@@ -228,8 +275,16 @@ public class UserService {
         if (req.getActive() != null) {
             membership.setActive(req.getActive());
         }
+        if (req.getJobTitleId() != null) {
+            applyJobTitle(user, membership, req.getJobTitleId(), membership.getCompany().getId());
+            userRepository.save(user);
+        }
+        if (req.getTeamIds() != null) {
+            syncTeams(user, membership.getCompany().getId(), req.getTeamIds());
+        }
 
-        return UserMapper.toResponse(userCompanyService.save(membership));
+        UserCompany saved = userCompanyService.save(membership);
+        return UserMapper.toResponse(saved, teamSummaries(id, saved.getCompany().getId()));
     }
 
     @Transactional
@@ -270,6 +325,53 @@ public class UserService {
         if (applyActive && req.getActive() != null) {
             user.setActive(req.getActive());
         }
+    }
+
+    private void applyJobTitle(User user, UserCompany membership, Long jobTitleId, Long companyId) {
+        if (jobTitleId == null) {
+            return;
+        }
+        CompanyJobTitle jobTitle = jobTitleService.requireActiveForCompany(jobTitleId, companyId);
+        membership.setJobTitle(jobTitle);
+        user.setJobTitle(jobTitle.getTitle());
+        userCompanyService.save(membership);
+    }
+
+    private void syncTeams(User user, Long companyId, List<Long> teamIds) {
+        List<UserTeam> existing = userTeamRepository.findAllByUser_IdAndTeam_Company_Id(user.getId(), companyId);
+        userTeamRepository.deleteAll(existing);
+
+        Set<Long> unique = new HashSet<>();
+        for (Long teamId : teamIds) {
+            if (teamId == null || !unique.add(teamId)) {
+                continue;
+            }
+            Team team = teamRepository.findByIdAndCompany_IdAndActiveTrue(teamId, companyId)
+                    .orElseThrow(() -> new UserException("Team not found: " + teamId, HttpStatus.BAD_REQUEST));
+            userTeamRepository.save(UserTeam.builder()
+                    .user(user)
+                    .team(team)
+                    .build());
+        }
+    }
+
+    private List<TeamSummaryDto> teamSummaries(Long userId, Long companyId) {
+        return userTeamRepository.findAllByUser_IdAndTeam_Company_IdAndTeam_ActiveTrue(userId, companyId)
+                .stream()
+                .map(ut -> new TeamSummaryDto(ut.getTeam().getId(), ut.getTeam().getName()))
+                .sorted(Comparator.comparing(TeamSummaryDto::getName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private UserCompany resolveMembership(AuthUserPrincipal principal) {
+        if (principal.getCompanyId() != null) {
+            return userCompanyService.listActiveForUser(principal.getUserId()).stream()
+                    .filter(m -> m.getCompany().getId().equals(principal.getCompanyId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        List<UserCompany> memberships = userCompanyService.listActiveForUser(principal.getUserId());
+        return memberships.isEmpty() ? null : memberships.get(0);
     }
 
     private void blockSelfDelete(Long currentUserId, Long targetId) {

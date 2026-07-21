@@ -1,56 +1,100 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
 
 import { UserService } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UpdateMeRequest } from '../../models/user.models';
 
+type ProfileTab = 'about' | 'posts';
+
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [
-    FormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule
-  ],
+  imports: [FormsModule, DatePipe, RouterLink],
   templateUrl: './profile.html',
-  styleUrl: './profile.css'
+  styleUrl: './profile.css',
 })
 export class Profile implements OnInit {
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
+  private readonly platformId = inject(PLATFORM_ID);
 
   firstName = '';
   lastName = '';
   email = '';
+  roleName = '';
+  jobTitle = '';
+  createdAt: string | null = null;
   password = '';
   currentPassword = '';
 
   loading = signal(false);
   saving = signal(false);
+  editing = signal(false);
   error = signal('');
   success = signal('');
+  tab = signal<ProfileTab>('about');
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.load();
+  }
+
+  load(): void {
     this.loading.set(true);
+    this.error.set('');
     this.userService.getMe().subscribe({
       next: (user) => {
         this.firstName = user.firstName;
         this.lastName = user.lastName;
         this.email = user.email;
+        this.roleName = user.roleName ?? this.authService.getRole() ?? '';
+        this.jobTitle = user.jobTitle ?? '';
+        this.createdAt = user.createdAt ?? null;
         this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message ?? 'Failed to load profile');
-      }
+      },
     });
+  }
+
+  initials(): string {
+    return `${this.firstName?.charAt(0) ?? ''}${this.lastName?.charAt(0) ?? ''}`.toUpperCase() || '?';
+  }
+
+  fullName(): string {
+    return `${this.firstName} ${this.lastName}`.trim();
+  }
+
+  companyName(): string {
+    const companies = this.authService.getUser()?.companies;
+    return companies?.length ? companies[0].name : 'No company';
+  }
+
+  headline(): string {
+    const parts = [this.jobTitle || this.roleName, this.companyName()].filter(Boolean);
+    return parts.join(' · ');
+  }
+
+  setTab(tab: ProfileTab): void {
+    this.tab.set(tab);
+  }
+
+  startEdit(): void {
+    this.editing.set(true);
+    this.error.set('');
+    this.success.set('');
+  }
+
+  cancelEdit(): void {
+    this.editing.set(false);
+    this.password = '';
+    this.currentPassword = '';
+    this.load();
   }
 
   save(): void {
@@ -61,7 +105,7 @@ export class Profile implements OnInit {
     const payload: UpdateMeRequest = {
       firstName: this.firstName,
       lastName: this.lastName,
-      email: this.email
+      email: this.email,
     };
 
     if (this.password) {
@@ -79,17 +123,23 @@ export class Profile implements OnInit {
         this.saving.set(false);
         this.password = '';
         this.currentPassword = '';
+        this.firstName = user.firstName;
+        this.lastName = user.lastName;
+        this.email = user.email;
+        this.roleName = user.roleName ?? this.roleName;
+        this.jobTitle = user.jobTitle ?? this.jobTitle;
         this.success.set('Profile updated');
+        this.editing.set(false);
         this.authService.patchSession({
           firstName: user.firstName,
           lastName: user.lastName,
-          email: user.email
+          email: user.email,
         });
       },
       error: (err) => {
         this.saving.set(false);
         this.error.set(err.error?.message ?? 'Update failed');
-      }
+      },
     });
   }
 }

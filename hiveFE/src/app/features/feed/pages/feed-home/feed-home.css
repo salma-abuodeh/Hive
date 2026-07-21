@@ -69,6 +69,13 @@
   flex-wrap: wrap;
 }
 
+.visibility-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .visibility select {
   border: 1px solid #eadfce;
   background: var(--cream-dim);

@@ -1,0 +1,162 @@
+<section class="company-page rise-in">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">{{ companyLabel() }}</p>
+      <h1>Organization</h1>
+      <p>Teams and members for your company.</p>
+    </div>
+    @if (auth.canManageTeams()) {
+      <button type="button" class="primary-btn" (click)="openCreate()">Create team</button>
+    }
+  </header>
+
+  @if (toast()) {
+    <div class="toast" role="status">{{ toast() }}</div>
+  }
+
+  @if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="loading-label">Loading teams…</p>
+  } @else if (!error()) {
+    <div class="shell">
+      <div class="shell-bar">
+        <h2>Teams</h2>
+        <span class="count-chip">{{ teams().length }}</span>
+      </div>
+
+      <div class="team-grid">
+        @for (team of teams(); track team.id) {
+          <article class="team-card">
+            <div class="card-top">
+              <span class="hex avatar">{{ initials(team.name) }}</span>
+              <span class="badge">Active</span>
+            </div>
+            <h3>{{ team.name }}</h3>
+            @if (team.description) {
+              <p class="desc">{{ team.description }}</p>
+            } @else {
+              <p class="desc muted">No description</p>
+            }
+            <p class="stats">{{ team.memberCount }} {{ team.memberCount === 1 ? 'member' : 'members' }}</p>
+            <div class="card-actions">
+              <button type="button" class="ghost-btn" (click)="openManage(team)">Manage</button>
+              <button type="button" class="ghost-btn danger" (click)="deactivateTeam(team)">Deactivate</button>
+            </div>
+          </article>
+        } @empty {
+          <div class="empty">
+            <span class="hex empty-icon">+</span>
+            <h3>No teams yet</h3>
+            <p>Create a team to group people and share team-only posts.</p>
+            <button type="button" class="primary-btn" (click)="openCreate()">Create team</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (showCreate()) {
+    <div class="modal-backdrop" (click)="showCreate.set(false)">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <button type="button" class="close" (click)="showCreate.set(false)" aria-label="Close">×</button>
+        <p class="eyebrow">New team</p>
+        <h2>Create team</h2>
+        <p class="modal-lead">You’ll be added as the first member automatically.</p>
+        <form (ngSubmit)="createTeam()">
+          <label class="field">
+            <span>Name</span>
+            <input [(ngModel)]="newName" name="newName" required placeholder="e.g. Engineering" />
+          </label>
+          <label class="field">
+            <span>Description <em>(optional)</em></span>
+            <textarea [(ngModel)]="newDescription" name="newDescription" rows="3" placeholder="What this team does"></textarea>
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="ghost-btn" (click)="showCreate.set(false)">Cancel</button>
+            <button type="submit" class="primary-btn" [disabled]="!newName.trim() || saving()">
+              {{ saving() ? 'Creating…' : 'Create team' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (managing(); as team) {
+    <div class="modal-backdrop" (click)="closeManage()">
+      <div class="modal wide" (click)="$event.stopPropagation()">
+        <button type="button" class="close" (click)="closeManage()" aria-label="Close">×</button>
+
+        <div class="manage-head">
+          <span class="hex avatar lg">{{ initials(team.name) }}</span>
+          <div>
+            <p class="eyebrow">Manage team</p>
+            <h2>{{ team.name }}</h2>
+            <p class="modal-sub">{{ team.memberCount }} {{ team.memberCount === 1 ? 'member' : 'members' }}</p>
+          </div>
+        </div>
+
+        <div class="edit-block">
+          <h3>Details</h3>
+          <label class="field">
+            <span>Name</span>
+            <input [(ngModel)]="editName" name="editName" required />
+          </label>
+          <label class="field">
+            <span>Description <em>(optional)</em></span>
+            <textarea [(ngModel)]="editDescription" name="editDescription" rows="2" placeholder="What this team does"></textarea>
+          </label>
+          <button
+            type="button"
+            class="primary-btn compact"
+            [disabled]="!editName.trim() || saving()"
+            (click)="saveTeamDetails()"
+          >
+            {{ saving() ? 'Saving…' : 'Save changes' }}
+          </button>
+        </div>
+
+        <div class="add-block">
+          <h3>Members</h3>
+          <label class="field tight">
+            <span>Add member</span>
+            <div class="add-row">
+              <select [(ngModel)]="addUserId" name="addUserId">
+                <option [ngValue]="null">Choose a company member…</option>
+                @for (u of availableUsers(); track u.id) {
+                  <option [ngValue]="u.id">{{ u.firstName }} {{ u.lastName }} — {{ u.email }}</option>
+                }
+              </select>
+              <button type="button" class="primary-btn compact" [disabled]="addUserId == null || saving()" (click)="addMember()">
+                Add
+              </button>
+            </div>
+          </label>
+          @if (availableUsers().length === 0) {
+            <p class="hint">Everyone in the company is already on this team.</p>
+          }
+        </div>
+
+        <div class="members-block">
+          <ul class="member-list">
+            @for (m of team.members ?? []; track m.userId) {
+              <li>
+                <span class="hex avatar sm">{{ memberInitials(m.firstName, m.lastName) }}</span>
+                <div class="member-copy">
+                  <strong>{{ m.firstName }} {{ m.lastName }}</strong>
+                  <span>{{ m.email }}@if (m.jobTitle) { · {{ m.jobTitle }} }</span>
+                </div>
+                <button type="button" class="text-btn" (click)="removeMember(m.userId)">Remove</button>
+              </li>
+            } @empty {
+              <li class="empty-members">No members yet. Add people from your company.</li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  }
+</section>

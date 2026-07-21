@@ -1,6 +1,7 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { CompanySummary } from '../../../features/auth/models/auth.models';
 import { NavMenuItem } from '../../models/nav-menu-item';
 import { MenuItem } from '../menu-item/menu-item';
 
@@ -15,14 +16,15 @@ export class Sidebar {
   private readonly router = inject(Router);
 
   readonly orgMenuOpen = signal(false);
+  readonly switching = signal(false);
 
   private readonly workspaceItems: NavMenuItem[] = [
     { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
     { name: 'Feed', url: '/feed', icon: 'feed' },
     { name: 'Saved', url: '/saved', icon: 'saved' },
-    { name: 'Community', url: '/community', icon: 'community' },
     { name: 'Notifications', url: '/notifications', icon: 'notifications' },
     { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },
+    { name: 'Company', url: '/company', icon: 'company', requiresManageTeams: true },
   ];
 
   readonly accountItems: NavMenuItem[] = [
@@ -30,14 +32,23 @@ export class Sidebar {
   ];
 
   readonly visibleWorkspaceItems = computed(() =>
-    this.workspaceItems.filter(
-      (item) => !item.requiresManageUsers || this.auth.canManageUsers()
-    )
+    this.workspaceItems.filter((item) => {
+      if (item.requiresManageUsers && !this.auth.canManageUsers()) return false;
+      if (item.requiresManageTeams && !this.auth.canManageTeams()) return false;
+      return true;
+    })
   );
 
+  companies(): CompanySummary[] {
+    return this.auth.getCompanies();
+  }
+
+  activeCompanyId(): number | null {
+    return this.auth.getActiveCompanyId();
+  }
+
   companyName(): string {
-    const companies = this.auth.getUser()?.companies;
-    return companies?.length ? companies[0].name : 'Your workspace';
+    return this.auth.getActiveCompany()?.name ?? 'Your workspace';
   }
 
   companyInitials(): string {
@@ -45,6 +56,26 @@ export class Sidebar {
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
+
+  isActiveCompany(company: CompanySummary): boolean {
+    return company.id === this.activeCompanyId();
+  }
+
+  switchWorkspace(company: CompanySummary, event: Event): void {
+    event.stopPropagation();
+    if (this.isActiveCompany(company) || this.switching()) {
+      this.orgMenuOpen.set(false);
+      return;
+    }
+    this.switching.set(true);
+    this.auth.switchCompany(company.id).subscribe({
+      next: () => {
+        this.orgMenuOpen.set(false);
+        window.location.reload();
+      },
+      error: () => this.switching.set(false),
+    });
   }
 
   closeOrgMenuAndNavigate(): void {

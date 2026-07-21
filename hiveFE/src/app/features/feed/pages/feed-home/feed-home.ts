@@ -1,7 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { TeamService } from '../../../../core/services/team.service';
+import { Team } from '../../../company/models/team.models';
 import { PostCard } from '../../components/post-card/post-card';
 import { CreatePostRequest, Post, VisibilityType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
@@ -14,10 +16,12 @@ import { PostService } from '../../services/post.service';
 })
 export class FeedHome implements OnInit {
   private readonly postsApi = inject(PostService);
-  private readonly router = inject(Router);
+  private readonly teamsApi = inject(TeamService);
+  private readonly platformId = inject(PLATFORM_ID);
   readonly auth = inject(AuthService);
 
   readonly posts = signal<Post[]>([]);
+  readonly myTeams = signal<Team[]>([]);
   readonly loading = signal(false);
   readonly publishing = signal(false);
   readonly error = signal<string | null>(null);
@@ -28,9 +32,33 @@ export class FeedHome implements OnInit {
 
   content = '';
   visibilityType: VisibilityType = 'COMPANY';
+  teamId: number | null = null;
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const editPost = history.state?.['editPost'] as Post | undefined;
+    if (editPost) {
+      this.onEdit(editPost);
+      history.replaceState({ ...history.state, editPost: null }, '');
+    }
+    this.loadMyTeams();
     this.loadFeed(true);
+  }
+
+  loadMyTeams(): void {
+    this.teamsApi.listMine().subscribe({
+      next: (teams) => this.myTeams.set(teams),
+      error: () => this.myTeams.set([]),
+    });
+  }
+
+  onVisibilityChange(): void {
+    if (this.visibilityType !== 'TEAM') {
+      this.teamId = null;
+    } else if (this.myTeams().length && this.teamId == null) {
+      this.teamId = this.myTeams()[0].id;
+    }
   }
 
   companyLabel(): string {
@@ -68,9 +96,15 @@ export class FeedHome implements OnInit {
     const text = this.content.trim();
     if (!text || this.publishing()) return;
 
+    if (this.visibilityType === 'TEAM' && this.teamId == null) {
+      this.error.set('Pick a team for team-only posts');
+      return;
+    }
+
     const payload: CreatePostRequest = {
       content: text,
       visibilityType: this.visibilityType,
+      teamId: this.visibilityType === 'TEAM' ? this.teamId : null,
     };
 
     const editId = this.editingId();
@@ -92,6 +126,7 @@ export class FeedHome implements OnInit {
         }
         this.content = '';
         this.visibilityType = 'COMPANY';
+        this.teamId = null;
         this.editingId.set(null);
         this.publishing.set(false);
       },
@@ -106,12 +141,14 @@ export class FeedHome implements OnInit {
     this.editingId.set(null);
     this.content = '';
     this.visibilityType = 'COMPANY';
+    this.teamId = null;
   }
 
   onEdit(post: Post): void {
     this.editingId.set(post.id);
     this.content = post.content;
     this.visibilityType = post.visibilityType;
+    this.teamId = post.teamId ?? null;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

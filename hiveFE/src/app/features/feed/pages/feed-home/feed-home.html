@@ -27,13 +27,32 @@
     </div>
 
     <div class="composer-actions">
-      <label class="visibility">
-        <span class="sr-only">Visibility</span>
-        <select [(ngModel)]="visibilityType" name="visibilityType">
-          <option value="COMPANY">Everyone at {{ companyLabel() }}</option>
-          <option value="TEAM">Team only</option>
-        </select>
-      </label>
+      <div class="visibility-group">
+        <label class="visibility">
+          <span class="sr-only">Visibility</span>
+          <select
+            [(ngModel)]="visibilityType"
+            name="visibilityType"
+            (ngModelChange)="onVisibilityChange()"
+          >
+            <option value="COMPANY">Everyone at {{ companyLabel() }}</option>
+            @if (myTeams().length) {
+              <option value="TEAM">Team only</option>
+            }
+          </select>
+        </label>
+
+        @if (visibilityType === 'TEAM') {
+          <label class="visibility">
+            <span class="sr-only">Team</span>
+            <select [(ngModel)]="teamId" name="teamId">
+              @for (t of myTeams(); track t.id) {
+                <option [ngValue]="t.id">{{ t.name }}</option>
+              }
+            </select>
+          </label>
+        }
+      </div>
 
       <div class="composer-buttons">
         @if (editingId()) {

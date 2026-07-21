@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class UpdateUserRequest {
@@ -24,4 +26,9 @@ public class UpdateUserRequest {
     private String roleName;
 
     private Boolean active;
+
+    private Long jobTitleId;
+
+    /** When non-null, replaces the user's team memberships in the company. */
+    private List<Long> teamIds;
 }

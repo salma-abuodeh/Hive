@@ -1,5 +1,5 @@
-import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -17,6 +17,7 @@ export class PostDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly postsApi = inject(PostService);
+  private readonly platformId = inject(PLATFORM_ID);
   readonly auth = inject(AuthService);
 
   readonly post = signal<Post | null>(null);
@@ -29,6 +30,8 @@ export class PostDetail implements OnInit {
   commentText = '';
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
       this.router.navigate(['/feed']);

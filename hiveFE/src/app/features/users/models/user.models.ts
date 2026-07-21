@@ -1,13 +1,29 @@
 import { CompanySummary } from '../../auth/models/auth.models';
 
+export interface TeamSummary {
+  id: number;
+  name: string;
+}
+
 export interface UserResponse {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
   roleName: string;
+  jobTitle?: string | null;
+  jobTitleId?: number | null;
+  teams?: TeamSummary[];
   active: boolean;
   createdAt: string;
+}
+
+export interface JobTitle {
+  id: number;
+  title: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UpdateMeRequest {
@@ -25,6 +41,8 @@ export interface CreateUserRequest {
   password: string;
   roleName: string;
   companyIds?: number[];
+  jobTitleId?: number | null;
+  teamIds?: number[];
 }
 
 export interface UpdateUserRequest {
@@ -34,6 +52,8 @@ export interface UpdateUserRequest {
   password?: string;
   roleName?: string;
   active?: boolean;
+  jobTitleId?: number | null;
+  teamIds?: number[];
 }
 
 export interface PageResponse<T> {
