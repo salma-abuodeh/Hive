@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
-import { RouterOutlet , RouterLink} from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+import { Sidebar } from '../../shared/components/sidebar/sidebar';
+import { Header } from '../../shared/components/header/header';
+
 @Component({
   selector: 'app-app-layout',
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, Sidebar, Header],
   templateUrl: './app-layout.html',
   styleUrl: './app-layout.css',
 })

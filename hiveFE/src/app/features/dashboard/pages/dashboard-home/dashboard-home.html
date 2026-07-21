@@ -1,1 +1,96 @@
-<p>Dashboard Page</p>
+<section class="dashboard">
+  <header class="welcome">
+    <div>
+      <p class="eyebrow">YOUR WORKSPACE</p>
+      <h1>Good morning, {{ firstName }}.</h1>
+      <p>Here is a calm look at what is happening in Hive today.</p>
+    </div>
+    <button class="gold-button" (click)="showCompanyForm.set(true)">
+      {{ isPlatformAdmin ? '+ Create a company' : '+ Apply for a company' }}
+    </button>
+  </header>
+
+  @if (message()) {
+    <p class="notice">{{ message() }}</p>
+  }
+
+  <div class="metrics">
+    <article>
+      <span class="metric-icon">♙</span>
+      <b>{{ auth.getUser()?.companies?.length || 0 }}</b>
+      <p>Companies</p>
+    </article>
+    <article>
+      <span class="metric-icon teal">✉</span>
+      <b>0</b>
+      <p>Pending invitations</p>
+    </article>
+    <article>
+      <span class="metric-icon green">⌁</span>
+      <b>—</b>
+      <p>Weekly engagement</p>
+    </article>
+    <article>
+      <span class="metric-icon rose">△</span>
+      <b>0</b>
+      <p>New alerts</p>
+    </article>
+  </div>
+
+  <div class="dashboard-grid">
+    <article class="panel company-panel">
+      <div>
+        <p class="eyebrow">GROW WITH HIVE</p>
+        @if (isPlatformAdmin) {
+          <h2>Create a company space</h2>
+          <p>Spin up a shared home for people, conversations, and the work that matters.</p>
+          <button class="text-button" (click)="showCompanyForm.set(true)">Create now →</button>
+        } @else {
+          <h2>Apply for a company space</h2>
+          <p>Request a shared home for people, conversations, and the work that matters.</p>
+          <button class="text-button" (click)="showCompanyForm.set(true)">Apply now →</button>
+        }
+      </div>
+      <span class="honeycomb">✦</span>
+    </article>
+  </div>
+
+  @if (showCompanyForm()) {
+    <div class="modal-backdrop" (click)="showCompanyForm.set(false)">
+      <form class="company-modal" (ngSubmit)="submitCompany()" (click)="$event.stopPropagation()">
+        <button type="button" class="close" (click)="showCompanyForm.set(false)">×</button>
+        <p class="eyebrow">{{ isPlatformAdmin ? 'NEW COMPANY' : 'COMPANY APPLICATION' }}</p>
+        <h2>{{ isPlatformAdmin ? 'Create a company' : 'Apply for a company' }}</h2>
+        <p>
+          @if (isPlatformAdmin) {
+            Tell us about the workspace. It will be created right away.
+          } @else {
+            Tell us about your workspace. We will review your application before creating it.
+          }
+        </p>
+        <label>
+          Company name
+          <input name="companyName" [(ngModel)]="companyName" required placeholder="Acme Studio">
+        </label>
+        <label>
+          Type
+          <select name="companyType" [(ngModel)]="companyType">
+            <option value="COMPANY">Company</option>
+            <option value="SCHOOL">School</option>
+          </select>
+        </label>
+        <label>
+          Website domain <em>(optional)</em>
+          <input name="companyDomain" [(ngModel)]="companyDomain" placeholder="acme.com">
+        </label>
+        <button class="gold-button" type="submit" [disabled]="saving() || !companyName.trim()">
+          @if (saving()) {
+            {{ isPlatformAdmin ? 'Creating…' : 'Submitting…' }}
+          } @else {
+            {{ isPlatformAdmin ? 'Create company →' : 'Submit application →' }}
+          }
+        </button>
+      </form>
+    </div>
+  }
+</section>

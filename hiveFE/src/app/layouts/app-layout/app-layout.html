@@ -1,30 +1,7 @@
-<div class="mainapp">
-  <aside class="sidebar">
-    <p class="logo">Hive</p>
-
-    <nav>
-      <a routerLink="/dashboard">Dashboard</a>
-      <a routerLink="/community">Community</a>
-      <a routerLink="/notifications">Notifications</a>
-    </nav>
-  </aside>
-
-  <div class="page-area">
-<header class="topbar">
-  <div class="topbar-left">
-    <img src="/logo/HiveLogo.png" alt="Hive Logo" class="topbar-logo" />
-    <h2>Hive</h2>
-  </div>
-
-      <div class="topbar-right">
-        <span><a routerLink="/dashboard">Dashboard</a></span>
-        <span><a routerLink="/notifications">Notifications</a></span>
-        <span><a routerLink="/profile">Profile</a></span>
-      </div>
-    </header>
-
-    <main class="content">
-      <router-outlet></router-outlet>
-    </main>
-  </div>
+<div class="app-shell">
+  <app-sidebar />
+  <app-header />
+  <main class="app-main">
+    <router-outlet></router-outlet>
+  </main>
 </div>

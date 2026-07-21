@@ -1,0 +1,91 @@
+<div class="form-head">
+  <h2>Create your account</h2>
+  <p>Let's get your profile set up.</p>
+</div>
+
+<form (ngSubmit)="signup()">
+  <div class="field">
+    <label for="fullName">Full name</label>
+    <input
+      id="fullName"
+      name="fullName"
+      type="text"
+      [(ngModel)]="fullName"
+      placeholder="Jordan Lee"
+      autocomplete="name"
+      required
+    >
+  </div>
+
+  <div class="field">
+    <label for="email">Email address</label>
+    <input
+      id="email"
+      name="email"
+      type="email"
+      [(ngModel)]="email"
+      placeholder="you@company.com"
+      autocomplete="email"
+      required
+    >
+  </div>
+
+  <div class="field">
+    <label for="password">Password</label>
+    <input
+      id="password"
+      name="password"
+      type="password"
+      [(ngModel)]="password"
+      (ngModelChange)="onPasswordChange($event)"
+      placeholder="Create a password"
+      autocomplete="new-password"
+      required
+    >
+    <div class="strength-track">
+      <div class="strength-bar" [style.width.%]="strengthPercent()" [style.background]="strengthColor()"></div>
+    </div>
+    @if (strengthLabel()) {
+      <span class="strength-label">{{ strengthLabel() }}</span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="confirm">Confirm password</label>
+    <input
+      id="confirm"
+      name="confirmPassword"
+      type="password"
+      [(ngModel)]="confirmPassword"
+      placeholder="Re-enter your password"
+      autocomplete="new-password"
+      required
+    >
+  </div>
+
+  <label class="checkbox-row terms">
+    <input type="checkbox" name="terms" [(ngModel)]="acceptedTerms" required>
+    <span>I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a></span>
+  </label>
+
+  @if (error()) {
+    <p class="error-text">{{ error() }}</p>
+  }
+
+  <button
+    class="btn btn-primary"
+    type="submit"
+    [disabled]="loading() || !canSubmit()"
+  >
+    {{ loading() ? 'Creating account…' : 'Create Account' }}
+  </button>
+</form>
+
+<div class="divider">or continue with</div>
+
+<div class="social-row">
+  <button type="button" class="btn btn-social" disabled>Google</button>
+  <button type="button" class="btn btn-social" disabled>Apple</button>
+</div>
+
+<p class="foot-note">Already have an account? <a routerLink="/login">Sign in</a></p>

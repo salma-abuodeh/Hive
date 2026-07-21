@@ -1,0 +1,113 @@
+<div class="users-page">
+    <h2>{{ title() }}</h2>
+  
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  
+    @if (auth.canManageUsers() && !error()) {
+      <section class="create-box">
+        <h3>Create user</h3>
+  
+        <div class="form-row">
+          <label>First name</label>
+          <input [(ngModel)]="firstName" />
+        </div>
+        <div class="form-row">
+          <label>Last name</label>
+          <input [(ngModel)]="lastName" />
+        </div>
+        <div class="form-row">
+          <label>Email</label>
+          <input [(ngModel)]="email" type="email" />
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input [(ngModel)]="password" type="password" />
+        </div>
+        <div class="form-row">
+          <label>Role</label>
+          <select [(ngModel)]="roleName">
+            <option value="Employee">Employee</option>
+            <option value="Manager">Manager</option>
+          </select>
+        </div>
+  
+        @if (auth.isPlatformAdmin()) {
+          <div class="form-row">
+            <label>Company id (optional)</label>
+            <input type="number" [(ngModel)]="companyId" />
+          </div>
+        }
+  
+        @if (formError()) {
+          <p class="error">{{ formError() }}</p>
+        }
+        @if (formSuccess()) {
+          <p class="success">{{ formSuccess() }}</p>
+        }
+  
+        <button [disabled]="saving()" (click)="create()">
+          @if (saving()) {
+            Creating...
+          } @else {
+            Create user
+          }
+        </button>
+      </section>
+    }
+  
+    @if (loading()) {
+      <p>Loading...</p>
+    } @else if (!error()) {
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+        <tbody>
+            @for (u of users(); track u.id) {
+                <tr>
+                  @if (editingId === u.id) {
+                    <td colspan="4">
+                      <div class="edit-row">
+                        <input [(ngModel)]="editFirstName" placeholder="First" />
+                        <input [(ngModel)]="editLastName" placeholder="Last" />
+                        <input [(ngModel)]="editEmail" placeholder="Email" />
+                    <select [(ngModel)]="editRoleName">
+                      <option value="Employee">Employee</option>
+                      <option value="Manager">Manager</option>
+                    </select>
+                        <label><input type="checkbox" [(ngModel)]="editActive" /> Active</label>
+                        <input type="password" [(ngModel)]="editPassword" placeholder="New password (optional)" />
+                        <button [disabled]="saving()" (click)="saveEdit()">Save</button>
+                        <button type="button" (click)="cancelEdit()">Cancel</button>
+                      </div>
+                    </td>
+                  } @else {
+                    <td>{{ u.firstName }} {{ u.lastName }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.roleName }}</td>
+                    <td>
+                      {{ u.active ? 'Yes' : 'No' }}
+                      <button type="button" (click)="startEdit(u)">Edit</button>
+                      <button type="button" (click)="toggleActive(u)">
+                        {{ u.active ? 'Deactivate' : 'Activate' }}
+                      </button>
+                      <button type="button" (click)="remove(u)">Delete</button>
+                    </td>
+                  }
+                </tr>
+              } @empty {
+            <tr>
+              <td colspan="4">No users found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>

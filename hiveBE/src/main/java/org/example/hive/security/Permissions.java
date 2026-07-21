@@ -36,6 +36,9 @@ public final class Permissions {
     public static final String USER_ASSIGN_ROLE = of(PermissionResource.USER, PermissionAction.ASSIGN_ROLE);
     public static final String USER_RESET_PASSWORD = of(PermissionResource.USER, PermissionAction.RESET_PASSWORD);
 
+    /** Platform-only operations (e.g. manage users across all companies). */
+    public static final String PLATFORM_MANAGE = "PLATFORM_MANAGE";
+
     public static String of(PermissionResource resource, PermissionAction action) {
         return resource.name() + "_" + action.name();
     }

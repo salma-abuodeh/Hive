@@ -3,14 +3,17 @@ package org.example.hive.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 public class RegisterResponseDto {
     private String token;
-    private Long userId;
-    private String email;
+    private Long id;
     private String firstName;
     private String lastName;
-    private Long companyId;
-    private String companyName;
+    private String email;
+    private String role;
+    private Boolean active;
+    private List<String> permissions;
 }

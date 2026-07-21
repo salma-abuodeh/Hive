@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+a {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px var(--sp-2);
+  border-radius: var(--radius-sm);
+  color: rgba(253, 252, 246, 0.72);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+a svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+a:hover {
+  background: rgba(253, 252, 246, 0.08);
+  color: var(--cream);
+}
+
+a.active {
+  background: var(--amber);
+  color: var(--espresso);
+  font-weight: 600;
+}

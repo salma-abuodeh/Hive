@@ -1,1 +1,29 @@
-<router-outlet></router-outlet>
+<div class="auth-shell">
+  <aside class="hive-panel" aria-label="Hive">
+    <div class="honeycomb-field" #honeycomb></div>
+    <div class="panel-top">
+      <a routerLink="/" class="logo-lockup on-dark">
+        <img src="/logo/hive-mark.png" width="56" height="auto" alt="Hive">
+      </a>
+    </div>
+    <div class="panel-copy rise-in">
+      <div class="eyebrow">{{ panel().eyebrow }}</div>
+      <h1>{{ panel().title }}</h1>
+      <p>{{ panel().body }}</p>
+      <div class="panel-stats">
+        @for (stat of panel().stats; track stat.label) {
+          <div class="stat">
+            <strong>{{ stat.value }}</strong>
+            <span>{{ stat.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </aside>
+
+  <section class="form-side">
+    <div class="form-wrap rise-in">
+      <router-outlet></router-outlet>
+    </div>
+  </section>
+</div>

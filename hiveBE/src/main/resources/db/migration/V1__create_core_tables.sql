@@ -35,10 +35,12 @@ CREATE TABLE roles (
 -- ==================== PERMISSIONS ====================
 
 CREATE TABLE permissions (
-                             id              BIGSERIAL PRIMARY KEY,
-                             name            VARCHAR(100) NOT NULL UNIQUE,
-                             description     VARCHAR(500),
-                             created_at      TIMESTAMP    NOT NULL DEFAULT now()
+    id              BIGSERIAL PRIMARY KEY,
+    name            VARCHAR(100) NOT NULL UNIQUE,
+    description     VARCHAR(500),
+    active          BOOLEAN      NOT NULL DEFAULT true,
+    created_at      TIMESTAMP    NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT now()
 );
 
 CREATE TABLE role_permissions (
@@ -77,6 +79,7 @@ CREATE TABLE user_companies (
                                 user_id         BIGINT NOT NULL REFERENCES users(id),
                                 company_id      BIGINT NOT NULL REFERENCES companies(id),
                                 role_id         BIGINT NOT NULL REFERENCES roles(id),
+                                active          BOOLEAN NOT NULL DEFAULT true,
                                 joined_at       TIMESTAMP NOT NULL DEFAULT now(),
                                 UNIQUE (user_id, company_id)
 );
