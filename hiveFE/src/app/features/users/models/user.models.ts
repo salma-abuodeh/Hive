@@ -5,6 +5,16 @@ export interface TeamSummary {
   name: string;
 }
 
+export interface CompanyMembership {
+  id: number;
+  name: string;
+  roleName?: string | null;
+  jobTitle?: string | null;
+  jobTitleId?: number | null;
+  teams?: TeamSummary[];
+  active?: boolean;
+}
+
 export interface UserResponse {
   id: number;
   firstName: string;
@@ -14,6 +24,8 @@ export interface UserResponse {
   jobTitle?: string | null;
   jobTitleId?: number | null;
   teams?: TeamSummary[];
+  activeCompanyId?: number | null;
+  companies?: CompanyMembership[];
   active: boolean;
   createdAt: string;
 }

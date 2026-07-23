@@ -3,6 +3,7 @@ package org.example.hive.service;
 import org.example.hive.dto.request.CreateUserRequest;
 import org.example.hive.dto.request.UpdateMeRequest;
 import org.example.hive.dto.request.UpdateUserRequest;
+import org.example.hive.dto.response.CompanyMembershipDto;
 import org.example.hive.dto.response.TeamSummaryDto;
 import org.example.hive.dto.response.UserResponseDto;
 import org.example.hive.exception.UserException;
@@ -63,13 +64,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponseDto getMe(AuthUserPrincipal principal) {
         User user = requireUser(principal.getUserId());
-        UserCompany membership = resolveMembership(principal);
-        if (membership != null) {
-            return UserMapper.toResponse(
-                    membership,
-                    teamSummaries(principal.getUserId(), membership.getCompany().getId()));
-        }
-        return UserMapper.toResponse(user);
+        return toProfileResponse(user, principal);
     }
 
     @Transactional
@@ -107,13 +102,32 @@ public class UserService {
         }
 
         user = userRepository.save(user);
-        UserCompany membership = resolveMembership(principal);
-        if (membership != null) {
-            return UserMapper.toResponse(
-                    membership,
-                    teamSummaries(userId, membership.getCompany().getId()));
+        return toProfileResponse(user, principal);
+    }
+
+    private UserResponseDto toProfileResponse(User user, AuthUserPrincipal principal) {
+        List<UserCompany> memberships = userCompanyService.listActiveForUser(user.getId());
+        List<CompanyMembershipDto> companies = memberships.stream()
+                .sorted(Comparator.comparing(m -> m.getCompany().getName(), String.CASE_INSENSITIVE_ORDER))
+                .map(m -> UserMapper.toCompanyMembership(
+                        m,
+                        teamSummaries(user.getId(), m.getCompany().getId())))
+                .toList();
+
+        UserCompany active = resolveMembership(principal);
+        if (active == null && !memberships.isEmpty()) {
+            active = memberships.get(0);
         }
-        return UserMapper.toResponse(user);
+
+        Long activeCompanyId = principal.getCompanyId() != null
+                ? principal.getCompanyId()
+                : (active != null ? active.getCompany().getId() : null);
+
+        List<TeamSummaryDto> activeTeams = activeCompanyId != null
+                ? teamSummaries(user.getId(), activeCompanyId)
+                : List.of();
+
+        return UserMapper.toProfile(user, active, activeTeams, activeCompanyId, companies);
     }
 
     // ===================== BY ADMIN =====================
@@ -349,7 +363,7 @@ public class UserService {
         for (UserTeam membership : existing) {
             Long currentTeamId = membership.getTeam().getId();
             if (desired.remove(currentTeamId)) {
-                continue; // already on this team
+                continue; 
             }
             userTeamRepository.delete(membership);
         }

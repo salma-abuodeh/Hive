@@ -46,6 +46,14 @@
               </span>
             }
           </div>
+
+          @if (teams().length) {
+            <div class="hero-teams">
+              @for (t of teams(); track t.id) {
+                <span class="chip">{{ t.name }}</span>
+              }
+            </div>
+          }
         </div>
       </div>
     </article>
@@ -122,7 +130,7 @@
               <p>{{ jobTitle || 'Assigned by your manager' }}</p>
             </div>
             <div>
-              <h4>Company</h4>
+              <h4>Active workspace</h4>
               <p>{{ companyName() }}</p>
             </div>
             <div>
@@ -135,6 +143,54 @@
                 }
               </p>
             </div>
+          </div>
+
+          <div class="detail-block">
+            <h3>Workspaces</h3>
+            @if (companies().length) {
+              <ul class="membership-list">
+                @for (c of companies(); track c.id) {
+                  <li [class.current]="isActiveCompany(c)">
+                    <div class="membership-head">
+                      <strong>{{ c.name }}</strong>
+                      @if (isActiveCompany(c)) {
+                        <span class="pill">Current</span>
+                      }
+                    </div>
+                    <p class="membership-meta">
+                      {{ c.roleName || 'Member' }}
+                      @if (c.jobTitle) {
+                        <span>· {{ c.jobTitle }}</span>
+                      }
+                    </p>
+                    @if (c.teams?.length) {
+                      <div class="chip-row">
+                        @for (t of c.teams; track t.id) {
+                          <span class="chip soft">{{ t.name }}</span>
+                        }
+                      </div>
+                    } @else {
+                      <p class="muted-line">No teams in this workspace</p>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="muted-line">You’re not in a company workspace yet.</p>
+            }
+          </div>
+
+          <div class="detail-block">
+            <h3>Teams in {{ companyName() }}</h3>
+            @if (teams().length) {
+              <div class="chip-row">
+                @for (t of teams(); track t.id) {
+                  <span class="chip">{{ t.name }}</span>
+                }
+              </div>
+            } @else {
+              <p class="muted-line">No teams assigned in the active workspace.</p>
+            }
           </div>
         }
       </section>

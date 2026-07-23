@@ -3,11 +3,12 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompanySummary } from '../../../features/auth/models/auth.models';
 import { NavMenuItem } from '../../models/nav-menu-item';
+import { Icon } from '../icon/icon';
 import { MenuItem } from '../menu-item/menu-item';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, MenuItem],
+  imports: [RouterLink, MenuItem, Icon],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
@@ -32,19 +33,15 @@ export class Sidebar {
   ];
 
   readonly visibleWorkspaceItems = computed(() =>
-    this.workspaceItems.filter((item) => {
-      if (item.requiresManageUsers && !this.auth.canManageUsers()) return false;
-      if (item.requiresManageTeams && !this.auth.canManageTeams()) return false;
-      return true;
-    })
+    this.workspaceItems.filter(
+      (item) =>
+        (!item.requiresManageUsers || this.auth.canManageUsers()) &&
+        (!item.requiresManageTeams || this.auth.canManageTeams())
+    )
   );
 
   companies(): CompanySummary[] {
     return this.auth.getCompanies();
-  }
-
-  activeCompanyId(): number | null {
-    return this.auth.getActiveCompanyId();
   }
 
   companyName(): string {
@@ -59,7 +56,7 @@ export class Sidebar {
   }
 
   isActiveCompany(company: CompanySummary): boolean {
-    return company.id === this.activeCompanyId();
+    return company.id === this.auth.getActiveCompanyId();
   }
 
   switchWorkspace(company: CompanySummary, event: Event): void {

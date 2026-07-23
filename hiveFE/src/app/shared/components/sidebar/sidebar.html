@@ -16,9 +16,7 @@
       <span>Company workspace</span>
     </div>
     <span class="switch-caret" aria-hidden="true">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M6 9l6 6 6-6"/>
-      </svg>
+      <app-icon name="chevronDown" />
     </span>
 
     @if (orgMenuOpen()) {
@@ -33,7 +31,7 @@
             [disabled]="switching()"
             (click)="switchWorkspace(company, $event)"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            <app-icon name="dashboard" />
             <span>{{ company.name }}</span>
           </button>
         } @empty {
@@ -42,11 +40,11 @@
 
         <div class="menu-divider"></div>
         <a routerLink="/dashboard" (click)="closeOrgMenuAndNavigate()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <app-icon name="search" />
           <span>Join another company</span>
         </a>
         <a routerLink="/dashboard" (click)="closeOrgMenuAndNavigate()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 5v14M5 12h14"/></svg>
+          <app-icon name="plus" />
           <span>{{ auth.isPlatformAdmin() ? 'Create a company' : 'Apply for a company' }}</span>
         </a>
       </div>
@@ -65,10 +63,7 @@
       <app-menu-item [name]="item.name" [url]="item.url" [icon]="item.icon" />
     }
     <button type="button" class="sidebar-link-btn" (click)="logout()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="9"/>
-        <path d="M12 7v5l3.5 2"/>
-      </svg>
+      <app-icon name="signout" />
       <span>Sign Out</span>
     </button>
   </div>

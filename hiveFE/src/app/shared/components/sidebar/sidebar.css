@@ -91,6 +91,11 @@
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
+.switch-caret app-icon {
+  width: 14px;
+  height: 14px;
+}
+
 .sidebar-org-switch.open .switch-caret {
   transform: rotate(180deg);
 }
@@ -161,9 +166,10 @@
   cursor: wait;
 }
 
-.workspace-option svg,
-.org-switch-menu a svg {
-  flex-shrink: 0;
+.workspace-option app-icon,
+.org-switch-menu a app-icon {
+  width: 16px;
+  height: 16px;
   color: var(--umber-light);
 }
 
@@ -171,11 +177,6 @@
   margin: 0;
   padding: var(--sp-2);
   font-size: var(--fs-xs);
-  color: var(--umber-light);
-}
-
-.org-switch-menu a svg {
-  flex-shrink: 0;
   color: var(--umber-light);
 }
 
@@ -218,8 +219,7 @@
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
-.sidebar-link-btn svg {
-  flex-shrink: 0;
+.sidebar-link-btn app-icon {
   width: 18px;
   height: 18px;
 }

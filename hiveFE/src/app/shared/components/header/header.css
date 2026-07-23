@@ -30,6 +30,11 @@
   color: var(--umber-light);
 }
 
+.header-search app-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .header-search input {
   border: none;
   background: transparent;
@@ -61,6 +66,11 @@
 .icon-btn:hover {
   background: var(--cream-dim);
   border-color: var(--mist);
+}
+
+.icon-btn app-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .icon-btn .badge-dot {
