@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TeamService } from '../../../../core/services/team.service';
 import { Team } from '../../../company/models/team.models';
-import { PostCard } from '../../components/post-card/post-card';
+import { PostCard, PostEditPayload } from '../../components/post-card/post-card';
 import { CreatePostRequest, Post, ReactionType, VisibilityType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
@@ -24,6 +24,7 @@ export class FeedHome implements OnInit {
   readonly myTeams = signal<Team[]>([]);
   readonly loading = signal(false);
   readonly publishing = signal(false);
+  readonly savingEdit = signal(false);
   readonly error = signal<string | null>(null);
   readonly toast = signal<string | null>(null);
   readonly page = signal(0);
@@ -38,8 +39,8 @@ export class FeedHome implements OnInit {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const editPost = history.state?.['editPost'] as Post | undefined;
-    if (editPost) {
-      this.onEdit(editPost);
+    if (editPost?.id) {
+      this.editingId.set(editPost.id);
       history.replaceState({ ...history.state, editPost: null }, '');
     }
     this.loadMyTeams();
@@ -107,27 +108,16 @@ export class FeedHome implements OnInit {
       teamId: this.visibilityType === 'TEAM' ? this.teamId : null,
     };
 
-    const editId = this.editingId();
     this.publishing.set(true);
     this.error.set(null);
 
-    const req$ = editId
-      ? this.postsApi.update(editId, payload)
-      : this.postsApi.create(payload);
-
-    req$.subscribe({
+    this.postsApi.create(payload).subscribe({
       next: (post) => {
-        if (editId) {
-          this.posts.update((list) => list.map((p) => (p.id === post.id ? post : p)));
-          this.showToast('Post updated');
-        } else {
-          this.posts.update((list) => [post, ...list]);
-          this.showToast('Post published');
-        }
+        this.posts.update((list) => [post, ...list]);
+        this.showToast('Post published');
         this.content = '';
         this.visibilityType = 'COMPANY';
         this.teamId = null;
-        this.editingId.set(null);
         this.publishing.set(false);
       },
       error: (err) => {
@@ -137,25 +127,41 @@ export class FeedHome implements OnInit {
     });
   }
 
-  cancelEdit(): void {
-    this.editingId.set(null);
-    this.content = '';
-    this.visibilityType = 'COMPANY';
-    this.teamId = null;
-  }
-
   onEdit(post: Post): void {
     this.editingId.set(post.id);
-    this.content = post.content;
-    this.visibilityType = post.visibilityType;
-    this.teamId = post.teamId ?? null;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  cancelEdit(): void {
+    this.editingId.set(null);
+    this.savingEdit.set(false);
+  }
+
+  onSaveEdit(payload: PostEditPayload): void {
+    const id = this.editingId();
+    if (id == null || this.savingEdit()) return;
+
+    this.savingEdit.set(true);
+    this.error.set(null);
+
+    this.postsApi.update(id, payload).subscribe({
+      next: (post) => {
+        this.posts.update((list) => list.map((p) => (p.id === post.id ? post : p)));
+        this.editingId.set(null);
+        this.savingEdit.set(false);
+        this.showToast('Post updated');
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message ?? 'Could not update post');
+        this.savingEdit.set(false);
+      },
+    });
   }
 
   onDelete(post: Post): void {
     if (!confirm('Delete this post?')) return;
     this.postsApi.delete(post.id).subscribe({
       next: () => {
+        if (this.editingId() === post.id) this.editingId.set(null);
         this.posts.update((list) => list.filter((p) => p.id !== post.id));
         this.showToast('Post deleted');
       },

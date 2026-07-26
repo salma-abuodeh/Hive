@@ -1,4 +1,4 @@
-<article class="post-card rise-in">
+<article class="post-card rise-in" [class.is-editing]="editing()">
   <header class="post-head">
     <div class="author">
       <span class="hex avatar">{{ initials(post()) }}</span>
@@ -14,12 +14,14 @@
             <span>{{ post().authorJobTitle }} · </span>
           }
           <time [attr.datetime]="post().createdAt">{{ post().createdAt | date: 'MMM d, y · h:mm a' }}</time>
-          <span> · {{ visibilityLabel(post()) }}</span>
+          @if (!editing()) {
+            <span> · {{ visibilityLabel(post()) }}</span>
+          }
         </p>
       </div>
     </div>
 
-    @if (post().ownedByMe && showActions()) {
+    @if (post().ownedByMe && showActions() && !editing()) {
       <div class="owner-actions">
         <button type="button" class="text-btn" (click)="edit.emit(post())">Edit</button>
         <button type="button" class="text-btn danger" (click)="remove.emit(post())">Delete</button>
@@ -27,9 +29,63 @@
     }
   </header>
 
-  <p class="body">{{ post().content }}</p>
+  @if (editing()) {
+    <form class="inline-edit" (ngSubmit)="submitEdit()">
+      <textarea
+        [(ngModel)]="editContent"
+        name="editContent"
+        rows="3"
+        maxlength="10000"
+        required
+      ></textarea>
 
-  @if (showActions()) {
+      <div class="inline-edit-actions">
+        <div class="visibility-group">
+          <label class="visibility">
+            <span class="sr-only">Visibility</span>
+            <select
+              [(ngModel)]="editVisibility"
+              name="editVisibility"
+              (ngModelChange)="onVisibilityChange()"
+            >
+              <option value="COMPANY">Everyone at {{ companyLabel() }}</option>
+              @if (teams().length) {
+                <option value="TEAM">Team only</option>
+              }
+            </select>
+          </label>
+
+          @if (editVisibility === 'TEAM') {
+            <label class="visibility">
+              <span class="sr-only">Team</span>
+              <select [(ngModel)]="editTeamId" name="editTeamId">
+                @for (t of teams(); track t.id) {
+                  <option [ngValue]="t.id">{{ t.name }}</option>
+                }
+              </select>
+            </label>
+          }
+        </div>
+
+        <div class="inline-edit-buttons">
+          <button type="button" class="ghost-btn" (click)="cancelEdit.emit()" [disabled]="saving()">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="save-btn"
+            [disabled]="!editContent.trim() || saving() || (editVisibility === 'TEAM' && editTeamId == null)"
+          >
+            {{ saving() ? 'Saving…' : 'Save changes' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  } @else {
+    <p class="body">{{ post().content }}</p>
+  }
+
+  @if (showActions() && !editing()) {
     <footer class="actions">
       <div class="react-wrap" (click)="$event.stopPropagation()">
         @if (pickerOpen()) {

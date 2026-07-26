@@ -3,7 +3,9 @@ import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
-import { PostCard } from '../../components/post-card/post-card';
+import { TeamService } from '../../../../core/services/team.service';
+import { Team } from '../../../company/models/team.models';
+import { PostCard, PostEditPayload } from '../../components/post-card/post-card';
 import { Comment, Post, ReactionType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
@@ -17,13 +19,17 @@ export class PostDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly postsApi = inject(PostService);
+  private readonly teamsApi = inject(TeamService);
   private readonly platformId = inject(PLATFORM_ID);
   readonly auth = inject(AuthService);
 
   readonly post = signal<Post | null>(null);
   readonly comments = signal<Comment[]>([]);
+  readonly myTeams = signal<Team[]>([]);
   readonly loading = signal(true);
   readonly submitting = signal(false);
+  readonly savingEdit = signal(false);
+  readonly editing = signal(false);
   readonly error = signal<string | null>(null);
   readonly toast = signal<string | null>(null);
 
@@ -37,7 +43,20 @@ export class PostDetail implements OnInit {
       this.router.navigate(['/feed']);
       return;
     }
+    this.loadMyTeams();
     this.load(id);
+  }
+
+  loadMyTeams(): void {
+    this.teamsApi.listMine().subscribe({
+      next: (teams) => this.myTeams.set(teams),
+      error: () => this.myTeams.set([]),
+    });
+  }
+
+  companyLabel(): string {
+    const companies = this.auth.getUser()?.companies;
+    return companies?.length ? companies[0].name : 'your company';
   }
 
   load(id: number): void {
@@ -125,8 +144,34 @@ export class PostDetail implements OnInit {
     }
   }
 
-  onEdit(post: Post): void {
-    this.router.navigate(['/feed'], { state: { editPost: post } });
+  onEdit(_post: Post): void {
+    this.editing.set(true);
+  }
+
+  cancelEdit(): void {
+    this.editing.set(false);
+    this.savingEdit.set(false);
+  }
+
+  onSaveEdit(payload: PostEditPayload): void {
+    const post = this.post();
+    if (!post || this.savingEdit()) return;
+
+    this.savingEdit.set(true);
+    this.error.set(null);
+
+    this.postsApi.update(post.id, payload).subscribe({
+      next: (updated) => {
+        this.post.set(updated);
+        this.editing.set(false);
+        this.savingEdit.set(false);
+        this.showToast('Post updated');
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message ?? 'Could not update post');
+        this.savingEdit.set(false);
+      },
+    });
   }
 
   onDelete(post: Post): void {

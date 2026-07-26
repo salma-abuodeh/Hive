@@ -14,11 +14,17 @@
   } @else if (post(); as current) {
     <app-post-card
       [post]="current"
+      [editing]="editing()"
+      [saving]="savingEdit()"
+      [teams]="myTeams()"
+      [companyLabel]="companyLabel()"
       (react)="onReact($event)"
       (saveToggle)="onSaveToggle($event)"
       (share)="onShare($event)"
       (edit)="onEdit($event)"
       (remove)="onDelete($event)"
+      (saveEdit)="onSaveEdit($event)"
+      (cancelEdit)="cancelEdit()"
     />
 
     <section class="comments rise-in">
