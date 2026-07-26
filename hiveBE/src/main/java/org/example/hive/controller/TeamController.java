@@ -33,7 +33,7 @@ public class TeamController {
     }
 
     @GetMapping
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).TEAM_VIEW)")
+    @PreAuthorize("hasPermission(null, 'TEAM_VIEW')")
     public List<TeamResponse> list(@AuthenticationPrincipal AuthUserPrincipal principal) {
         return teamService.list(principal);
     }
@@ -45,7 +45,7 @@ public class TeamController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).TEAM_VIEW)")
+    @PreAuthorize("hasPermission(null, 'TEAM_VIEW')")
     public TeamResponse getById(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
@@ -53,7 +53,7 @@ public class TeamController {
     }
 
     @PostMapping
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).TEAM_CREATE)")
+    @PreAuthorize("hasPermission(null, 'TEAM_CREATE')")
     @ResponseStatus(HttpStatus.CREATED)
     public TeamResponse create(
             @Valid @RequestBody CreateTeamRequest req,
@@ -62,7 +62,7 @@ public class TeamController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).TEAM_UPDATE)")
+    @PreAuthorize("hasPermission(null, 'TEAM_UPDATE')")
     public TeamResponse update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateTeamRequest req,
@@ -71,7 +71,7 @@ public class TeamController {
     }
 
     @PostMapping("/{id}/members")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).TEAM_MANAGE_MEMBERS)")
+    @PreAuthorize("hasPermission(null, 'TEAM_MANAGE_MEMBERS')")
     public TeamResponse addMembers(
             @PathVariable Long id,
             @Valid @RequestBody AddTeamMembersRequest req,
@@ -80,7 +80,7 @@ public class TeamController {
     }
 
     @DeleteMapping("/{id}/members/{userId}")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).TEAM_MANAGE_MEMBERS)")
+    @PreAuthorize("hasPermission(null, 'TEAM_MANAGE_MEMBERS')")
     public TeamResponse removeMember(
             @PathVariable Long id,
             @PathVariable Long userId,

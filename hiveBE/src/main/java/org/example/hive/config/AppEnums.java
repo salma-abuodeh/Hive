@@ -42,6 +42,10 @@ public final class AppEnums {
     }
 
     public enum ReactionType {
-        LIKE
+        LIKE,
+        LOVE,
+        LAUGHING,
+        SAD,
+        ANGRY
     }
 }

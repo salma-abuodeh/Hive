@@ -14,7 +14,7 @@
   } @else if (post(); as current) {
     <app-post-card
       [post]="current"
-      (likeToggle)="onLikeToggle($event)"
+      (react)="onReact($event)"
       (saveToggle)="onSaveToggle($event)"
       (share)="onShare($event)"
       (edit)="onEdit($event)"

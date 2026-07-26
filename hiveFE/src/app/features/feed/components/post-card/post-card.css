@@ -102,7 +102,54 @@
 }
 
 .action.on {
-  color: var(--error);
+  color: var(--amber-dark);
+}
+
+.react-wrap {
+  position: relative;
+}
+
+.react-picker {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 0;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: #fffefb;
+  border: 1px solid #eadfce;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.react-opt {
+  border: 0;
+  background: transparent;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.react-opt:hover,
+.react-opt.on {
+  background: var(--cream-dim);
+  transform: scale(1.12);
+}
+
+.react-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.action .count {
+  color: var(--umber-light);
+  font-weight: 600;
 }
 
 .action.bookmark {

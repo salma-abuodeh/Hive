@@ -5,7 +5,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { TeamService } from '../../../../core/services/team.service';
 import { Team } from '../../../company/models/team.models';
 import { PostCard } from '../../components/post-card/post-card';
-import { CreatePostRequest, Post, VisibilityType } from '../../models/post.models';
+import { CreatePostRequest, Post, ReactionType, VisibilityType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
 @Component({
@@ -163,9 +163,8 @@ export class FeedHome implements OnInit {
     });
   }
 
-  onLikeToggle(post: Post): void {
-    const req$ = post.likedByMe ? this.postsApi.unlike(post.id) : this.postsApi.like(post.id);
-    req$.subscribe({
+  onReact(event: { post: Post; type: ReactionType }): void {
+    this.postsApi.react(event.post.id, event.type).subscribe({
       next: (updated) => this.replacePost(updated),
       error: (err) => this.error.set(err?.error?.message ?? 'Could not update reaction'),
     });

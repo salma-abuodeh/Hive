@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PostCard } from '../../components/post-card/post-card';
-import { Comment, Post } from '../../models/post.models';
+import { Comment, Post, ReactionType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
 @Component({
@@ -97,9 +97,8 @@ export class PostDetail implements OnInit {
     });
   }
 
-  onLikeToggle(post: Post): void {
-    const req$ = post.likedByMe ? this.postsApi.unlike(post.id) : this.postsApi.like(post.id);
-    req$.subscribe({
+  onReact(event: { post: Post; type: ReactionType }): void {
+    this.postsApi.react(event.post.id, event.type).subscribe({
       next: (updated) => this.post.set(updated),
       error: (err) => this.error.set(err?.error?.message ?? 'Could not update reaction'),
     });

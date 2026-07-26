@@ -15,7 +15,6 @@ public class UserResponseDto {
     private String email;
     private String roleName;
     private String jobTitle;
-    private Long jobTitleId;
     private List<TeamSummaryDto> teams;
     private Long activeCompanyId;
     private List<CompanyMembershipDto> companies;

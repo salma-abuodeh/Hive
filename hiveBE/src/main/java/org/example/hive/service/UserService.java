@@ -8,7 +8,6 @@ import org.example.hive.dto.response.TeamSummaryDto;
 import org.example.hive.dto.response.UserResponseDto;
 import org.example.hive.exception.UserException;
 import org.example.hive.mapper.UserMapper;
-import org.example.hive.model.CompanyJobTitle;
 import org.example.hive.model.Role;
 import org.example.hive.model.RoleNames;
 import org.example.hive.model.Team;
@@ -39,7 +38,6 @@ public class UserService {
     private final UserCompanyService userCompanyService;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JobTitleService jobTitleService;
     private final TeamRepository teamRepository;
     private final UserTeamRepository userTeamRepository;
 
@@ -47,19 +45,15 @@ public class UserService {
                        UserCompanyService userCompanyService,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
-                       JobTitleService jobTitleService,
                        TeamRepository teamRepository,
                        UserTeamRepository userTeamRepository) {
         this.userRepository = userRepository;
         this.userCompanyService = userCompanyService;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jobTitleService = jobTitleService;
         this.teamRepository = teamRepository;
         this.userTeamRepository = userTeamRepository;
     }
-
-    // ===================== ME =====================
 
     @Transactional(readOnly = true)
     public UserResponseDto getMe(AuthUserPrincipal principal) {
@@ -130,8 +124,6 @@ public class UserService {
         return UserMapper.toProfile(user, active, activeTeams, activeCompanyId, companies);
     }
 
-    // ===================== BY ADMIN =====================
-
     @Transactional(readOnly = true)
     public Page<UserResponseDto> listUsersByAdmin(Boolean active, Pageable pageable) {
         Page<User> page = active == null
@@ -163,7 +155,7 @@ public class UserService {
         UserCompany last = null;
         for (Long companyId : companyIds) {
             last = userCompanyService.add(user, companyId, role);
-            applyJobTitle(user, last, req.getJobTitleId(), companyId);
+            applyJobTitle(user, last, req.getJobTitle());
             if (req.getTeamIds() != null) {
                 syncTeams(user, companyId, req.getTeamIds());
             }
@@ -190,8 +182,8 @@ public class UserService {
         List<UserCompany> memberships = userCompanyService.listActiveForUser(user.getId());
         if (!memberships.isEmpty()) {
             UserCompany membership = memberships.get(0);
-            if (req.getJobTitleId() != null) {
-                applyJobTitle(user, membership, req.getJobTitleId(), membership.getCompany().getId());
+            if (req.getJobTitle() != null) {
+                applyJobTitle(user, membership, req.getJobTitle());
                 userCompanyService.save(membership);
             }
             if (req.getTeamIds() != null) {
@@ -214,8 +206,6 @@ public class UserService {
         userCompanyService.deleteAllForUser(id);
         userRepository.deleteById(id);
     }
-
-    // ===================== BY MANAGER =====================
 
     @Transactional(readOnly = true)
     public Page<UserResponseDto> listUsersByManager(AuthUserPrincipal principal, Boolean active, Pageable pageable) {
@@ -261,7 +251,7 @@ public class UserService {
         UserCompany last = null;
         for (Long companyId : target) {
             last = userCompanyService.add(user, companyId, role);
-            applyJobTitle(user, last, req.getJobTitleId(), companyId);
+            applyJobTitle(user, last, req.getJobTitle());
             if (req.getTeamIds() != null) {
                 syncTeams(user, companyId, req.getTeamIds());
             }
@@ -289,8 +279,8 @@ public class UserService {
         if (req.getActive() != null) {
             membership.setActive(req.getActive());
         }
-        if (req.getJobTitleId() != null) {
-            applyJobTitle(user, membership, req.getJobTitleId(), membership.getCompany().getId());
+        if (req.getJobTitle() != null) {
+            applyJobTitle(user, membership, req.getJobTitle());
             userRepository.save(user);
         }
         if (req.getTeamIds() != null) {
@@ -307,8 +297,6 @@ public class UserService {
         UserCompany membership = userCompanyService.requireInPrincipalCompanies(principal, id);
         userCompanyService.deactivate(membership);
     }
-
-    // ===================== helpers =====================
 
     private User newUser(CreateUserRequest req) {
         return User.builder()
@@ -341,13 +329,13 @@ public class UserService {
         }
     }
 
-    private void applyJobTitle(User user, UserCompany membership, Long jobTitleId, Long companyId) {
-        if (jobTitleId == null) {
+    private void applyJobTitle(User user, UserCompany membership, String jobTitle) {
+        if (jobTitle == null) {
             return;
         }
-        CompanyJobTitle jobTitle = jobTitleService.requireActiveForCompany(jobTitleId, companyId);
-        membership.setJobTitle(jobTitle);
-        user.setJobTitle(jobTitle.getTitle());
+        String trimmed = jobTitle.isBlank() ? null : jobTitle.trim();
+        membership.setJobTitle(trimmed);
+        user.setJobTitle(trimmed);
         userCompanyService.save(membership);
     }
 

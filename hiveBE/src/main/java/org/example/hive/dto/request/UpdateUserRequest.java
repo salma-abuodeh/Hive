@@ -27,8 +27,8 @@ public class UpdateUserRequest {
 
     private Boolean active;
 
-    private Long jobTitleId;
+    @Size(max = 150)
+    private String jobTitle;
 
-    /** When non-null, replaces the user's team memberships in the company. */
     private List<Long> teamIds;
 }

@@ -18,7 +18,7 @@
     @for (post of posts(); track post.id) {
       <app-post-card
         [post]="post"
-        (likeToggle)="onLikeToggle($event)"
+        (react)="onReact($event)"
         (saveToggle)="onSaveToggle($event)"
         (share)="onShare($event)"
         (edit)="onEdit($event)"

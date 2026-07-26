@@ -4,10 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { JobTitleService } from '../../../../core/services/job-title.service';
 import { TeamService } from '../../../../core/services/team.service';
 import { Team } from '../../../company/models/team.models';
-import { CreateUserRequest, JobTitle, UpdateUserRequest, UserResponse } from '../../models/user.models';
+import { CreateUserRequest, UpdateUserRequest, UserResponse } from '../../models/user.models';
 
 @Component({
   selector: 'app-users-list',
@@ -18,25 +17,21 @@ import { CreateUserRequest, JobTitle, UpdateUserRequest, UserResponse } from '..
 })
 export class UsersList implements OnInit {
   private readonly userService = inject(UserService);
-  private readonly jobTitleService = inject(JobTitleService);
   private readonly teamService = inject(TeamService);
   private readonly platformId = inject(PLATFORM_ID);
   readonly auth = inject(AuthService);
 
   users = signal<UserResponse[]>([]);
-  jobTitles = signal<JobTitle[]>([]);
   teams = signal<Team[]>([]);
   loading = signal(false);
   saving = signal(false);
   error = signal('');
   formError = signal('');
   toast = signal<string | null>(null);
-  jobTitleError = signal('');
   title = signal('Users');
 
   readonly showCreate = signal(false);
   readonly showEdit = signal(false);
-  readonly showTitles = signal(false);
 
   firstName = '';
   lastName = '';
@@ -44,9 +39,8 @@ export class UsersList implements OnInit {
   password = '';
   roleName = 'Employee';
   companyId: number | null = null;
-  jobTitleId: number | null = null;
+  jobTitle = '';
   teamIds: number[] = [];
-  newJobTitle = '';
 
   editingId: number | null = null;
   editFirstName = '';
@@ -55,7 +49,7 @@ export class UsersList implements OnInit {
   editRoleName = 'Employee';
   editActive = true;
   editPassword = '';
-  editJobTitleId: number | null = null;
+  editJobTitle = '';
   editTeamIds: number[] = [];
 
   ngOnInit(): void {
@@ -67,16 +61,9 @@ export class UsersList implements OnInit {
     }
     this.title.set(this.auth.isPlatformAdmin() ? 'All users' : 'Company users');
     this.load();
-    if (!this.auth.isPlatformAdmin() || this.auth.getUser()?.companies?.length) {
-      this.loadJobTitles();
-    }
     if (this.canAssignTeams()) {
       this.loadTeams();
     }
-  }
-
-  canManageTitles(): boolean {
-    return !this.auth.isPlatformAdmin() || !!this.auth.getUser()?.companies?.length;
   }
 
   canAssignTeams(): boolean {
@@ -103,22 +90,11 @@ export class UsersList implements OnInit {
     });
   }
 
-  loadJobTitles(): void {
-    this.jobTitleService.list(true).subscribe({
-      next: (titles) => this.jobTitles.set(titles),
-      error: () => this.jobTitles.set([]),
-    });
-  }
-
   loadTeams(): void {
     this.teamService.list().subscribe({
       next: (teams) => this.teams.set(teams.filter((t) => t.active)),
       error: () => this.teams.set([]),
     });
-  }
-
-  activeJobTitles(): JobTitle[] {
-    return this.jobTitles().filter((t) => t.active);
   }
 
   editingUser(): UserResponse | null {
@@ -135,7 +111,7 @@ export class UsersList implements OnInit {
     this.password = '';
     this.roleName = 'Employee';
     this.companyId = null;
-    this.jobTitleId = null;
+    this.jobTitle = '';
     this.teamIds = [];
     this.showCreate.set(true);
   }
@@ -143,45 +119,6 @@ export class UsersList implements OnInit {
   closeCreate(): void {
     this.showCreate.set(false);
     this.formError.set('');
-  }
-
-  openTitles(): void {
-    this.jobTitleError.set('');
-    this.newJobTitle = '';
-    this.showTitles.set(true);
-  }
-
-  closeTitles(): void {
-    this.showTitles.set(false);
-    this.jobTitleError.set('');
-  }
-
-  addJobTitle(): void {
-    const title = this.newJobTitle.trim();
-    if (!title) return;
-    this.jobTitleError.set('');
-    this.jobTitleService.create(title).subscribe({
-      next: (created) => {
-        this.jobTitles.update((list) =>
-          [...list, created].sort((a, b) => a.title.localeCompare(b.title))
-        );
-        this.newJobTitle = '';
-        this.showToast('Job title added');
-      },
-      error: (err) => this.jobTitleError.set(err.error?.message ?? 'Could not add job title'),
-    });
-  }
-
-  deactivateJobTitle(title: JobTitle): void {
-    this.jobTitleService.deactivate(title.id).subscribe({
-      next: () => {
-        this.jobTitles.update((list) =>
-          list.map((t) => (t.id === title.id ? { ...t, active: false } : t))
-        );
-        this.showToast('Job title removed');
-      },
-      error: (err) => this.jobTitleError.set(err.error?.message ?? 'Could not remove job title'),
-    });
   }
 
   toggleTeam(id: number, selected: boolean): void {
@@ -220,8 +157,9 @@ export class UsersList implements OnInit {
       roleName: this.roleName,
     };
 
-    if (this.jobTitleId != null) {
-      payload.jobTitleId = this.jobTitleId;
+    const title = this.jobTitle.trim();
+    if (title) {
+      payload.jobTitle = title;
     }
     if (this.canAssignTeams()) {
       payload.teamIds = [...this.teamIds];
@@ -258,7 +196,7 @@ export class UsersList implements OnInit {
     this.editRoleName = u.roleName || 'Employee';
     this.editActive = u.active;
     this.editPassword = '';
-    this.editJobTitleId = u.jobTitleId ?? null;
+    this.editJobTitle = u.jobTitle ?? '';
     this.editTeamIds = (u.teams ?? []).map((t) => t.id);
     this.formError.set('');
     this.showEdit.set(true);
@@ -286,9 +224,9 @@ export class UsersList implements OnInit {
       email: this.editEmail,
       roleName: this.editRoleName,
       active: this.editActive,
+      jobTitle: this.editJobTitle.trim(),
     };
     if (this.editPassword) payload.password = this.editPassword;
-    if (this.editJobTitleId != null) payload.jobTitleId = this.editJobTitleId;
     if (this.canAssignTeams()) {
       payload.teamIds = [...this.editTeamIds];
     }

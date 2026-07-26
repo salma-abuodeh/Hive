@@ -77,13 +77,6 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
     }
 
-    @ExceptionHandler(JobTitleException.class)
-    public ResponseEntity<ErrorResponseDto> handleJobTitleException(JobTitleException ex) {
-        return ResponseEntity
-                .status(ex.getStatus())
-                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
-    }
-
     @ExceptionHandler(TeamException.class)
     public ResponseEntity<ErrorResponseDto> handleTeamException(TeamException ex) {
         return ResponseEntity

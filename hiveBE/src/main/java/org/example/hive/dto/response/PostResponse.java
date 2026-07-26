@@ -3,6 +3,7 @@ package org.example.hive.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.hive.config.AppEnums.PostType;
+import org.example.hive.config.AppEnums.ReactionType;
 import org.example.hive.config.AppEnums.VisibilityType;
 
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class PostResponse {
     private long likeCount;
     private long commentCount;
     private boolean likedByMe;
+    private ReactionType myReaction;
     private boolean savedByMe;
     private boolean ownedByMe;
     private LocalDateTime createdAt;

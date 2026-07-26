@@ -14,7 +14,7 @@ public final class UserMapper {
     }
 
     public static UserResponseDto toResponse(User user) {
-        return toResponse(user, null, null, null, List.of(), null, List.of());
+        return toResponse(user, null, null, List.of(), null, List.of());
     }
 
     public static UserResponseDto toResponse(UserCompany membership) {
@@ -22,9 +22,8 @@ public final class UserMapper {
     }
 
     public static UserResponseDto toResponse(UserCompany membership, List<TeamSummaryDto> teams) {
-        Long jobTitleId = membership.getJobTitle() != null ? membership.getJobTitle().getId() : null;
         String jobTitle = membership.getJobTitle() != null
-                ? membership.getJobTitle().getTitle()
+                ? membership.getJobTitle()
                 : membership.getUser().getJobTitle();
         Long companyId = membership.getCompany().getId();
         return new UserResponseDto(
@@ -34,7 +33,6 @@ public final class UserMapper {
                 membership.getUser().getEmail(),
                 membership.getRole().getName(),
                 jobTitle,
-                jobTitleId,
                 teams != null ? teams : List.of(),
                 companyId,
                 List.of(),
@@ -50,11 +48,8 @@ public final class UserMapper {
             Long activeCompanyId,
             List<CompanyMembershipDto> companies) {
         if (activeMembership != null) {
-            Long jobTitleId = activeMembership.getJobTitle() != null
-                    ? activeMembership.getJobTitle().getId()
-                    : null;
             String jobTitle = activeMembership.getJobTitle() != null
-                    ? activeMembership.getJobTitle().getTitle()
+                    ? activeMembership.getJobTitle()
                     : user.getJobTitle();
             return new UserResponseDto(
                     user.getId(),
@@ -63,7 +58,6 @@ public final class UserMapper {
                     user.getEmail(),
                     activeMembership.getRole().getName(),
                     jobTitle,
-                    jobTitleId,
                     activeTeams != null ? activeTeams : List.of(),
                     activeCompanyId,
                     companies != null ? companies : List.of(),
@@ -80,7 +74,6 @@ public final class UserMapper {
                 user.getEmail(),
                 platformRole,
                 user.getJobTitle(),
-                null,
                 List.of(),
                 activeCompanyId,
                 companies != null ? companies : List.of(),
@@ -93,16 +86,14 @@ public final class UserMapper {
             User user,
             String roleName,
             String jobTitle,
-            Long jobTitleId,
             List<TeamSummaryDto> teams) {
-        return toResponse(user, roleName, jobTitle, jobTitleId, teams, null, List.of());
+        return toResponse(user, roleName, jobTitle, teams, null, List.of());
     }
 
     public static UserResponseDto toResponse(
             User user,
             String roleName,
             String jobTitle,
-            Long jobTitleId,
             List<TeamSummaryDto> teams,
             Long activeCompanyId,
             List<CompanyMembershipDto> companies) {
@@ -116,7 +107,6 @@ public final class UserMapper {
                 user.getEmail(),
                 resolvedRole,
                 jobTitle != null ? jobTitle : user.getJobTitle(),
-                jobTitleId,
                 teams != null ? teams : List.of(),
                 activeCompanyId,
                 companies != null ? companies : List.of(),
@@ -128,16 +118,11 @@ public final class UserMapper {
     public static CompanyMembershipDto toCompanyMembership(
             UserCompany membership,
             List<TeamSummaryDto> teams) {
-        Long jobTitleId = membership.getJobTitle() != null ? membership.getJobTitle().getId() : null;
-        String jobTitle = membership.getJobTitle() != null
-                ? membership.getJobTitle().getTitle()
-                : null;
         return new CompanyMembershipDto(
                 membership.getCompany().getId(),
                 membership.getCompany().getName(),
                 membership.getRole() != null ? membership.getRole().getName() : null,
-                jobTitle,
-                jobTitleId,
+                membership.getJobTitle(),
                 teams != null ? teams : List.of(),
                 membership.getActive()
         );

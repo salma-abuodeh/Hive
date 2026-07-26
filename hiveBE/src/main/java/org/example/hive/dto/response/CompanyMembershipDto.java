@@ -12,7 +12,6 @@ public class CompanyMembershipDto {
     private String name;
     private String roleName;
     private String jobTitle;
-    private Long jobTitleId;
     private List<TeamSummaryDto> teams;
     private Boolean active;
 }

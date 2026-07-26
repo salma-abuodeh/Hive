@@ -1,6 +1,5 @@
 package org.example.hive.repository;
 
-import org.example.hive.config.AppEnums.ReactionType;
 import org.example.hive.model.Reaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,29 +13,25 @@ public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 
     Optional<Reaction> findByUser_IdAndPost_Id(Long userId, Long postId);
 
-    long countByPost_IdAndReactionType(Long postId, ReactionType reactionType);
+    long countByPost_Id(Long postId);
 
-    boolean existsByUser_IdAndPost_IdAndReactionType(Long userId, Long postId, ReactionType reactionType);
+    boolean existsByUser_IdAndPost_Id(Long userId, Long postId);
 
     @Query("""
             SELECT r.post.id, COUNT(r)
             FROM Reaction r
-            WHERE r.post.id IN :postIds AND r.reactionType = :type
+            WHERE r.post.id IN :postIds
             GROUP BY r.post.id
             """)
-    List<Object[]> countByPostIds(
-            @Param("postIds") Collection<Long> postIds,
-            @Param("type") ReactionType type);
+    List<Object[]> countByPostIds(@Param("postIds") Collection<Long> postIds);
 
     @Query("""
-            SELECT r.post.id
+            SELECT r.post.id, r.reactionType
             FROM Reaction r
             WHERE r.user.id = :userId
               AND r.post.id IN :postIds
-              AND r.reactionType = :type
             """)
-    List<Long> findLikedPostIds(
+    List<Object[]> findMyReactionsByPostIds(
             @Param("userId") Long userId,
-            @Param("postIds") Collection<Long> postIds,
-            @Param("type") ReactionType type);
+            @Param("postIds") Collection<Long> postIds);
 }

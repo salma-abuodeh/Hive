@@ -1,5 +1,14 @@
 export type VisibilityType = 'COMPANY' | 'TEAM';
 export type PostType = 'TEXT';
+export type ReactionType = 'LIKE' | 'LOVE' | 'LAUGHING' | 'SAD' | 'ANGRY';
+
+export const REACTION_OPTIONS: { type: ReactionType; emoji: string; label: string }[] = [
+  { type: 'LIKE', emoji: '👍', label: 'Like' },
+  { type: 'LOVE', emoji: '❤️', label: 'Love' },
+  { type: 'LAUGHING', emoji: '😂', label: 'Laughing' },
+  { type: 'SAD', emoji: '😢', label: 'Sad' },
+  { type: 'ANGRY', emoji: '😡', label: 'Angry' },
+];
 
 export interface Post {
   id: number;
@@ -16,6 +25,7 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  myReaction?: ReactionType | null;
   savedByMe: boolean;
   ownedByMe: boolean;
   createdAt: string;

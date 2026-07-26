@@ -8,9 +8,6 @@
     </div>
     @if (auth.canManageUsers() && !error()) {
       <div class="header-actions">
-        @if (canManageTitles()) {
-          <button type="button" class="ghost-btn" (click)="openTitles()">Job titles</button>
-        }
         <button type="button" class="primary-btn" (click)="openCreate()">Create user</button>
       </div>
     }
@@ -156,21 +153,14 @@
 
               <label class="field">
                 <span>Job title</span>
-                <select [(ngModel)]="jobTitleId" name="jobTitleId">
-                  <option [ngValue]="null">Select a job title</option>
-                  @for (t of activeJobTitles(); track t.id) {
-                    <option [ngValue]="t.id">{{ t.title }}</option>
-                  }
-                </select>
+                <input
+                  [(ngModel)]="jobTitle"
+                  name="jobTitle"
+                  placeholder="e.g. Software Engineer"
+                  maxlength="150"
+                />
               </label>
             </div>
-
-            @if (activeJobTitles().length === 0 && canManageTitles()) {
-              <p class="hint">
-                No job titles yet.
-                <button type="button" class="text-link" (click)="closeCreate(); openTitles()">Add job titles</button>
-              </p>
-            }
 
             @if (canAssignTeams()) {
               <div class="team-picker">
@@ -266,12 +256,12 @@
 
               <label class="field">
                 <span>Job title</span>
-                <select [(ngModel)]="editJobTitleId" name="editJobTitleId">
-                  <option [ngValue]="null">No job title</option>
-                  @for (t of activeJobTitles(); track t.id) {
-                    <option [ngValue]="t.id">{{ t.title }}</option>
-                  }
-                </select>
+                <input
+                  [(ngModel)]="editJobTitle"
+                  name="editJobTitle"
+                  placeholder="e.g. Software Engineer"
+                  maxlength="150"
+                />
               </label>
             </div>
 
@@ -334,49 +324,6 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  }
-
-  @if (showTitles()) {
-    <div class="modal-backdrop" (click)="closeTitles()">
-      <div class="modal" (click)="$event.stopPropagation()">
-        <button type="button" class="close" (click)="closeTitles()" aria-label="Close">×</button>
-        <div class="modal-head">
-          <p class="eyebrow">Company</p>
-          <h2>Job titles</h2>
-          <p class="modal-lead">Define titles, then assign them when inviting people.</p>
-        </div>
-
-        <div class="modal-body">
-          <form class="job-add" (ngSubmit)="addJobTitle()">
-            <input
-              [(ngModel)]="newJobTitle"
-              name="newJobTitle"
-              placeholder="e.g. Software Engineer"
-            />
-            <button type="submit" class="primary-btn compact">Add</button>
-          </form>
-
-          @if (jobTitleError()) {
-            <p class="notice error">{{ jobTitleError() }}</p>
-          }
-
-          <ul class="job-list">
-            @for (t of jobTitles(); track t.id) {
-              <li [class.inactive]="!t.active">
-                <span>{{ t.title }}</span>
-                @if (t.active) {
-                  <button type="button" class="text-btn" (click)="deactivateJobTitle(t)">Remove</button>
-                } @else {
-                  <span class="badge muted">Inactive</span>
-                }
-              </li>
-            } @empty {
-              <li class="empty-jobs">No job titles yet.</li>
-            }
-          </ul>
-        </div>
       </div>
     </div>
   }

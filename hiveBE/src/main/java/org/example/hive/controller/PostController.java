@@ -1,8 +1,10 @@
 package org.example.hive.controller;
 
 import jakarta.validation.Valid;
+import org.example.hive.config.AppEnums.ReactionType;
 import org.example.hive.dto.request.CreateCommentRequest;
 import org.example.hive.dto.request.CreatePostRequest;
+import org.example.hive.dto.request.ReactToPostRequest;
 import org.example.hive.dto.request.UpdatePostRequest;
 import org.example.hive.dto.response.CommentResponse;
 import org.example.hive.dto.response.PostResponse;
@@ -88,18 +90,23 @@ public class PostController {
 
     @PostMapping("/{id}/reactions")
     @PreAuthorize("isAuthenticated()")
-    public PostResponse like(
+    public PostResponse react(
             @PathVariable Long id,
+            @Valid @RequestBody(required = false) ReactToPostRequest req,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return postService.like(principal, id);
+        ReactToPostRequest body = req != null ? req : new ReactToPostRequest();
+        if (body.getReactionType() == null) {
+            body.setReactionType(ReactionType.LIKE);
+        }
+        return postService.react(principal, id, body);
     }
 
     @DeleteMapping("/{id}/reactions")
     @PreAuthorize("isAuthenticated()")
-    public PostResponse unlike(
+    public PostResponse removeReaction(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
-        return postService.unlike(principal, id);
+        return postService.removeReaction(principal, id);
     }
 
     @GetMapping("/{id}/comments")

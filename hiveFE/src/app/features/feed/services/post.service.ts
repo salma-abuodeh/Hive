@@ -8,6 +8,7 @@ import {
   CreatePostRequest,
   PageResponse,
   Post,
+  ReactionType,
   UpdatePostRequest,
 } from '../models/post.models';
 
@@ -48,11 +49,11 @@ export class PostService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  like(id: number): Observable<Post> {
-    return this.http.post<Post>(`${this.baseUrl}/${id}/reactions`, {});
+  react(id: number, reactionType: ReactionType = 'LIKE'): Observable<Post> {
+    return this.http.post<Post>(`${this.baseUrl}/${id}/reactions`, { reactionType });
   }
 
-  unlike(id: number): Observable<Post> {
+  removeReaction(id: number): Observable<Post> {
     return this.http.delete<Post>(`${this.baseUrl}/${id}/reactions`);
   }
 

@@ -1,5 +1,6 @@
 package org.example.hive.mapper;
 
+import org.example.hive.config.AppEnums.ReactionType;
 import org.example.hive.dto.response.CommentResponse;
 import org.example.hive.dto.response.PostResponse;
 import org.example.hive.model.Comment;
@@ -15,7 +16,7 @@ public final class PostMapper {
             String authorRoleName,
             long likeCount,
             long commentCount,
-            boolean likedByMe,
+            ReactionType myReaction,
             boolean savedByMe,
             Long currentUserId) {
         return PostResponse.builder()
@@ -32,7 +33,8 @@ public final class PostMapper {
                 .authorJobTitle(post.getAuthor().getJobTitle())
                 .likeCount(likeCount)
                 .commentCount(commentCount)
-                .likedByMe(likedByMe)
+                .likedByMe(myReaction != null)
+                .myReaction(myReaction)
                 .savedByMe(savedByMe)
                 .ownedByMe(currentUserId != null && currentUserId.equals(post.getAuthor().getId()))
                 .createdAt(post.getCreatedAt())

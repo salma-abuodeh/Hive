@@ -33,7 +33,8 @@ public class CreateUserRequest {
 
     private List<Long> companyIds;
 
-    private Long jobTitleId;
+    @Size(max = 150)
+    private String jobTitle;
 
     private List<Long> teamIds;
 }

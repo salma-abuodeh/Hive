@@ -5,6 +5,7 @@ import org.example.hive.config.AppEnums.ReactionType;
 import org.example.hive.config.AppEnums.VisibilityType;
 import org.example.hive.dto.request.CreateCommentRequest;
 import org.example.hive.dto.request.CreatePostRequest;
+import org.example.hive.dto.request.ReactToPostRequest;
 import org.example.hive.dto.request.UpdatePostRequest;
 import org.example.hive.dto.response.CommentResponse;
 import org.example.hive.dto.response.PostResponse;
@@ -155,25 +156,33 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse like(AuthUserPrincipal principal, Long postId) {
+    public PostResponse react(AuthUserPrincipal principal, Long postId, ReactToPostRequest req) {
         Post post = requireVisiblePost(principal, postId);
         Long userId = principal.getUserId();
+        ReactionType type = req.getReactionType() != null ? req.getReactionType() : ReactionType.LIKE;
 
-        if (!reactionRepository.existsByUser_IdAndPost_IdAndReactionType(userId, postId, ReactionType.LIKE)) {
+        reactionRepository.findByUser_IdAndPost_Id(userId, postId).ifPresentOrElse(existing -> {
+            if (existing.getReactionType() == type) {
+                reactionRepository.delete(existing);
+            } else {
+                existing.setReactionType(type);
+                reactionRepository.save(existing);
+            }
+        }, () -> {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new PostException("User not found", HttpStatus.NOT_FOUND));
             reactionRepository.save(Reaction.builder()
                     .user(user)
                     .post(post)
-                    .reactionType(ReactionType.LIKE)
+                    .reactionType(type)
                     .build());
-        }
+        });
 
         return toResponse(post, principal, requireCompanyId(principal));
     }
 
     @Transactional
-    public PostResponse unlike(AuthUserPrincipal principal, Long postId) {
+    public PostResponse removeReaction(AuthUserPrincipal principal, Long postId) {
         Post post = requireVisiblePost(principal, postId);
         reactionRepository.findByUser_IdAndPost_Id(principal.getUserId(), postId)
                 .ifPresent(reactionRepository::delete);
@@ -251,11 +260,11 @@ public class PostService {
 
         List<Long> postIds = posts.stream().map(Post::getId).toList();
         Map<Long, Long> likeCounts = toCountMap(
-                reactionRepository.countByPostIds(postIds, ReactionType.LIKE));
+                reactionRepository.countByPostIds(postIds));
         Map<Long, Long> commentCounts = toCountMap(
                 commentRepository.countActiveByPostIds(postIds));
-        Set<Long> likedIds = new HashSet<>(
-                reactionRepository.findLikedPostIds(principal.getUserId(), postIds, ReactionType.LIKE));
+        Map<Long, ReactionType> myReactions = toReactionMap(
+                reactionRepository.findMyReactionsByPostIds(principal.getUserId(), postIds));
         Set<Long> savedIds = new HashSet<>(
                 savedPostRepository.findSavedPostIds(principal.getUserId(), postIds));
         Map<Long, String> roleNames = resolveAuthorRoleNames(posts, companyId);
@@ -265,16 +274,17 @@ public class PostService {
                 roleNames.get(post.getAuthor().getId()),
                 likeCounts.getOrDefault(post.getId(), 0L),
                 commentCounts.getOrDefault(post.getId(), 0L),
-                likedIds.contains(post.getId()),
+                myReactions.get(post.getId()),
                 savedIds.contains(post.getId()),
                 principal.getUserId()));
     }
 
     private PostResponse toResponse(Post post, AuthUserPrincipal principal, Long companyId) {
-        long likes = reactionRepository.countByPost_IdAndReactionType(post.getId(), ReactionType.LIKE);
+        long likes = reactionRepository.countByPost_Id(post.getId());
         long comments = commentRepository.countByPost_IdAndActiveTrue(post.getId());
-        boolean liked = reactionRepository.existsByUser_IdAndPost_IdAndReactionType(
-                principal.getUserId(), post.getId(), ReactionType.LIKE);
+        ReactionType myReaction = reactionRepository.findByUser_IdAndPost_Id(principal.getUserId(), post.getId())
+                .map(Reaction::getReactionType)
+                .orElse(null);
         boolean saved = savedPostRepository.existsByUser_IdAndPost_Id(principal.getUserId(), post.getId());
         String roleName = userCompanyRepository
                 .findByUser_IdAndCompany_Id(post.getAuthor().getId(), companyId)
@@ -282,7 +292,7 @@ public class PostService {
                 .orElse(null);
 
         return PostMapper.toResponse(
-                post, roleName, likes, comments, liked, saved, principal.getUserId());
+                post, roleName, likes, comments, myReaction, saved, principal.getUserId());
     }
 
     private Map<Long, String> resolveAuthorRoleNames(List<Post> posts, Long companyId) {
@@ -302,6 +312,14 @@ public class PostService {
         Map<Long, Long> map = new HashMap<>();
         for (Object[] row : rows) {
             map.put((Long) row[0], (Long) row[1]);
+        }
+        return map;
+    }
+
+    private static Map<Long, ReactionType> toReactionMap(List<Object[]> rows) {
+        Map<Long, ReactionType> map = new HashMap<>();
+        for (Object[] row : rows) {
+            map.put((Long) row[0], (ReactionType) row[1]);
         }
         return map;
     }

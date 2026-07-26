@@ -151,7 +151,6 @@ public class TeamService {
         return toDetail(requireTeam(principal, teamId));
     }
 
-    /** Teams the current user belongs to (for feed visibility picker). */
     @Transactional(readOnly = true)
     public List<TeamResponse> listMine(AuthUserPrincipal principal) {
         Long companyId = requireCompanyId(principal);

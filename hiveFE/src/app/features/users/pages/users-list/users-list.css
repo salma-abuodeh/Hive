@@ -555,8 +555,7 @@
 }
 
 .field input,
-.field select,
-.job-add input {
+.field select {
   width: 100%;
   padding: 11px 12px;
   border: 1px solid var(--mist);
@@ -567,8 +566,7 @@
 }
 
 .field input:focus,
-.field select:focus,
-.job-add input:focus {
+.field select:focus {
   border-color: var(--amber);
   box-shadow: var(--shadow-focus);
   background: #fff;
@@ -588,47 +586,6 @@
   font-size: inherit;
   padding: 0;
   text-decoration: underline;
-}
-
-.job-add {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.job-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-  max-height: 280px;
-  overflow: auto;
-}
-
-.job-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--cream-dim);
-  border: 1px solid #f1e7d8;
-  font-size: var(--fs-sm);
-  color: var(--espresso);
-}
-
-.job-list li.inactive {
-  opacity: 0.55;
-}
-
-.empty-jobs {
-  color: var(--umber);
-  background: transparent !important;
-  border-style: dashed !important;
-  justify-content: center;
 }
 
 .text-btn {

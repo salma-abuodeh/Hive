@@ -10,7 +10,6 @@ export interface CompanyMembership {
   name: string;
   roleName?: string | null;
   jobTitle?: string | null;
-  jobTitleId?: number | null;
   teams?: TeamSummary[];
   active?: boolean;
 }
@@ -22,20 +21,11 @@ export interface UserResponse {
   email: string;
   roleName: string;
   jobTitle?: string | null;
-  jobTitleId?: number | null;
   teams?: TeamSummary[];
   activeCompanyId?: number | null;
   companies?: CompanyMembership[];
   active: boolean;
   createdAt: string;
-}
-
-export interface JobTitle {
-  id: number;
-  title: string;
-  active: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface UpdateMeRequest {
@@ -53,7 +43,7 @@ export interface CreateUserRequest {
   password: string;
   roleName: string;
   companyIds?: number[];
-  jobTitleId?: number | null;
+  jobTitle?: string | null;
   teamIds?: number[];
 }
 
@@ -64,7 +54,7 @@ export interface UpdateUserRequest {
   password?: string;
   roleName?: string;
   active?: boolean;
-  jobTitleId?: number | null;
+  jobTitle?: string | null;
   teamIds?: number[];
 }
 

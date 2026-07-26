@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { PostCard } from '../../components/post-card/post-card';
-import { Post } from '../../models/post.models';
+import { Post, ReactionType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
 @Component({
@@ -48,9 +48,8 @@ export class SavedPosts implements OnInit {
     });
   }
 
-  onLikeToggle(post: Post): void {
-    const req$ = post.likedByMe ? this.postsApi.unlike(post.id) : this.postsApi.like(post.id);
-    req$.subscribe({
+  onReact(event: { post: Post; type: ReactionType }): void {
+    this.postsApi.react(event.post.id, event.type).subscribe({
       next: (updated) => this.replacePost(updated),
       error: (err) => this.error.set(err?.error?.message ?? 'Could not update reaction'),
     });

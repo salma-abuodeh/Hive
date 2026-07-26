@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"user", "company", "role", "jobTitle"})
+@ToString(exclude = {"user", "company", "role"})
 public class UserCompany {
 
     @Id
@@ -33,9 +33,8 @@ public class UserCompany {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_title_id")
-    private CompanyJobTitle jobTitle;
+    @Column(name = "job_title", length = 150)
+    private String jobTitle;
 
     @Column(nullable = false)
     private Boolean active;
