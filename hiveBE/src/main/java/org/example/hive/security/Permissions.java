@@ -36,6 +36,13 @@ public final class Permissions {
     public static final String USER_ASSIGN_ROLE = of(PermissionResource.USER, PermissionAction.ASSIGN_ROLE);
     public static final String USER_RESET_PASSWORD = of(PermissionResource.USER, PermissionAction.RESET_PASSWORD);
 
+    //Event
+    public static final String EVENT_VIEW = of(PermissionResource.EVENT, PermissionAction.VIEW);
+    public static final String EVENT_CREATE = of(PermissionResource.EVENT, PermissionAction.CREATE);
+    public static final String EVENT_UPDATE = of(PermissionResource.EVENT, PermissionAction.UPDATE);
+    public static final String EVENT_DELETE = of(PermissionResource.EVENT, PermissionAction.DELETE);
+    public static final String EVENT_INVITE = of(PermissionResource.EVENT, PermissionAction.INVITE);
+
     /** Platform-only operations (e.g. manage users across all companies). */
     public static final String PLATFORM_MANAGE = "PLATFORM_MANAGE";
 
