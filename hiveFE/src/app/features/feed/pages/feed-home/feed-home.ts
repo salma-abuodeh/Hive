@@ -1,11 +1,10 @@
-import { isPlatformBrowser } from '@angular/common';
-import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TeamService } from '../../../../core/services/team.service';
 import { Team } from '../../../company/models/team.models';
-import { PostCard, PostEditPayload } from '../../components/post-card/post-card';
-import { CreatePostRequest, Post, ReactionType, VisibilityType } from '../../models/post.models';
+import { PostCard } from '../../components/post-card/post-card';
+import { Post, ReactionType, VisibilityType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
 @Component({
@@ -15,43 +14,45 @@ import { PostService } from '../../services/post.service';
   styleUrl: './feed-home.css',
 })
 export class FeedHome implements OnInit {
-  private readonly postsApi = inject(PostService);
-  private readonly teamsApi = inject(TeamService);
-  private readonly platformId = inject(PLATFORM_ID);
-  readonly auth = inject(AuthService);
+  private postsApi = inject(PostService);
+  private teamsApi = inject(TeamService);
+  auth = inject(AuthService);
 
-  readonly posts = signal<Post[]>([]);
-  readonly myTeams = signal<Team[]>([]);
-  readonly loading = signal(false);
-  readonly publishing = signal(false);
-  readonly savingEdit = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly toast = signal<string | null>(null);
-  readonly page = signal(0);
-  readonly lastPage = signal(true);
-  readonly editingId = signal<number | null>(null);
+  posts = signal<Post[]>([]);
+  myTeams = signal<Team[]>([]);
+  loading = signal(false);
+  busy = signal(false);
+  error = signal('');
+  toast = signal('');
+  page = 0;
+  lastPage = true;
+  editingId: number | null = null;
 
   content = '';
   visibilityType: VisibilityType = 'COMPANY';
   teamId: number | null = null;
 
   ngOnInit(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-
     const editPost = history.state?.['editPost'] as Post | undefined;
     if (editPost?.id) {
-      this.editingId.set(editPost.id);
-      history.replaceState({ ...history.state, editPost: null }, '');
+      this.editingId = editPost.id;
     }
-    this.loadMyTeams();
-    this.loadFeed(true);
-  }
 
-  loadMyTeams(): void {
     this.teamsApi.listMine().subscribe({
       next: (teams) => this.myTeams.set(teams),
       error: () => this.myTeams.set([]),
     });
+    this.loadFeed(true);
+  }
+
+  companyName(): string {
+    return this.auth.getUser()?.companies?.[0]?.name ?? 'your company';
+  }
+
+  initials(): string {
+    const u = this.auth.getUser();
+    if (!u) return '?';
+    return `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase();
   }
 
   onVisibilityChange(): void {
@@ -62,32 +63,21 @@ export class FeedHome implements OnInit {
     }
   }
 
-  companyLabel(): string {
-    const companies = this.auth.getUser()?.companies;
-    return companies?.length ? companies[0].name : 'your company';
-  }
-
-  initials(): string {
-    const user = this.auth.getUser();
-    if (!user) return '?';
-    return `${user.firstName?.charAt(0) ?? ''}${user.lastName?.charAt(0) ?? ''}`.toUpperCase();
-  }
-
   loadFeed(reset = false): void {
     if (this.loading()) return;
-    const nextPage = reset ? 0 : this.page() + 1;
+    const nextPage = reset ? 0 : this.page + 1;
     this.loading.set(true);
-    this.error.set(null);
+    this.error.set('');
 
-    this.postsApi.listFeed(nextPage, 10).subscribe({
+    this.postsApi.listFeed(nextPage).subscribe({
       next: (res) => {
         this.posts.set(reset ? res.content : [...this.posts(), ...res.content]);
-        this.page.set(res.number);
-        this.lastPage.set(res.last);
+        this.page = res.number;
+        this.lastPage = res.last;
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Could not load the feed');
+        this.error.set(err.error?.message ?? 'Could not load feed');
         this.loading.set(false);
       },
     });
@@ -95,64 +85,53 @@ export class FeedHome implements OnInit {
 
   publish(): void {
     const text = this.content.trim();
-    if (!text || this.publishing()) return;
+    if (!text || this.busy()) return;
 
-    if (this.visibilityType === 'TEAM' && this.teamId == null) {
-      this.error.set('Pick a team for team-only posts');
-      return;
-    }
-
-    const payload: CreatePostRequest = {
-      content: text,
-      visibilityType: this.visibilityType,
-      teamId: this.visibilityType === 'TEAM' ? this.teamId : null,
-    };
-
-    this.publishing.set(true);
-    this.error.set(null);
-
-    this.postsApi.create(payload).subscribe({
-      next: (post) => {
-        this.posts.update((list) => [post, ...list]);
-        this.showToast('Post published');
-        this.content = '';
-        this.visibilityType = 'COMPANY';
-        this.teamId = null;
-        this.publishing.set(false);
-      },
-      error: (err) => {
-        this.error.set(err?.error?.message ?? 'Could not publish post');
-        this.publishing.set(false);
-      },
-    });
+    this.busy.set(true);
+    this.postsApi
+      .create({
+        content: text,
+        visibilityType: this.visibilityType,
+        teamId: this.visibilityType === 'TEAM' ? this.teamId : null,
+      })
+      .subscribe({
+        next: (post) => {
+          this.posts.update((list) => [post, ...list]);
+          this.content = '';
+          this.visibilityType = 'COMPANY';
+          this.teamId = null;
+          this.busy.set(false);
+          this.toast.set('Published');
+        },
+        error: (err) => {
+          this.error.set(err.error?.message ?? 'Could not publish');
+          this.busy.set(false);
+        },
+      });
   }
 
   onEdit(post: Post): void {
-    this.editingId.set(post.id);
+    this.editingId = post.id;
   }
 
   cancelEdit(): void {
-    this.editingId.set(null);
-    this.savingEdit.set(false);
+    this.editingId = null;
   }
 
-  onSaveEdit(payload: PostEditPayload): void {
-    const id = this.editingId();
-    if (id == null || this.savingEdit()) return;
+  onSaveEdit(data: { content: string; visibilityType: VisibilityType; teamId: number | null }): void {
+    if (!this.editingId || this.busy()) return;
+    this.busy.set(true);
 
-    this.savingEdit.set(true);
-    this.error.set(null);
-
-    this.postsApi.update(id, payload).subscribe({
+    this.postsApi.update(this.editingId, data).subscribe({
       next: (post) => {
         this.posts.update((list) => list.map((p) => (p.id === post.id ? post : p)));
-        this.editingId.set(null);
-        this.savingEdit.set(false);
-        this.showToast('Post updated');
+        this.editingId = null;
+        this.busy.set(false);
+        this.toast.set('Updated');
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Could not update post');
-        this.savingEdit.set(false);
+        this.error.set(err.error?.message ?? 'Could not update');
+        this.busy.set(false);
       },
     });
   }
@@ -161,50 +140,34 @@ export class FeedHome implements OnInit {
     if (!confirm('Delete this post?')) return;
     this.postsApi.delete(post.id).subscribe({
       next: () => {
-        if (this.editingId() === post.id) this.editingId.set(null);
         this.posts.update((list) => list.filter((p) => p.id !== post.id));
-        this.showToast('Post deleted');
+        if (this.editingId === post.id) this.editingId = null;
       },
-      error: (err) => this.error.set(err?.error?.message ?? 'Could not delete post'),
+      error: (err) => this.error.set(err.error?.message ?? 'Could not delete'),
     });
   }
 
-  onReact(event: { post: Post; type: ReactionType }): void {
-    this.postsApi.react(event.post.id, event.type).subscribe({
-      next: (updated) => this.replacePost(updated),
-      error: (err) => this.error.set(err?.error?.message ?? 'Could not update reaction'),
+  onReact(e: { post: Post; type: ReactionType }): void {
+    this.postsApi.react(e.post.id, e.type).subscribe({
+      next: (updated) => {
+        this.posts.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
+      },
+      error: (err) => this.error.set(err.error?.message ?? 'Could not react'),
     });
   }
 
   onSaveToggle(post: Post): void {
-    const req$ = post.savedByMe ? this.postsApi.unsave(post.id) : this.postsApi.save(post.id);
-    req$.subscribe({
+    const call = post.savedByMe ? this.postsApi.unsave(post.id) : this.postsApi.save(post.id);
+    call.subscribe({
       next: (updated) => {
-        this.replacePost(updated);
-        this.showToast(updated.savedByMe ? 'Saved' : 'Removed from saved');
+        this.posts.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
       },
-      error: (err) => this.error.set(err?.error?.message ?? 'Could not update saved post'),
+      error: (err) => this.error.set(err.error?.message ?? 'Could not save'),
     });
   }
 
-  async onShare(post: Post): Promise<void> {
-    const url = `${window.location.origin}/feed/${post.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      this.showToast('Link copied');
-    } catch {
-      this.showToast(url);
-    }
-  }
-
-  private replacePost(updated: Post): void {
-    this.posts.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
-  }
-
-  private showToast(message: string): void {
-    this.toast.set(message);
-    setTimeout(() => {
-      if (this.toast() === message) this.toast.set(null);
-    }, 2200);
+  onShare(post: Post): void {
+    navigator.clipboard.writeText(`${window.location.origin}/feed/${post.id}`);
+    this.toast.set('Link copied');
   }
 }

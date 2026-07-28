@@ -6,10 +6,6 @@
     </div>
   </header>
 
-  @if (toast()) {
-    <div class="toast" role="status">{{ toast() }}</div>
-  }
-
   @if (error()) {
     <div class="notice error" role="alert">{{ error() }}</div>
   }
@@ -34,7 +30,7 @@
     }
   </div>
 
-  @if (!lastPage()) {
+  @if (!lastPage) {
     <button type="button" class="load-more" (click)="load()" [disabled]="loading()">
       {{ loading() ? 'Loading…' : 'Load more' }}
     </button>

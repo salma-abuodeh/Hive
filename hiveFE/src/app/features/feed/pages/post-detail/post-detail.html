@@ -1,10 +1,6 @@
 <section class="detail">
   <a routerLink="/feed" class="back">← Back to feed</a>
 
-  @if (toast()) {
-    <div class="toast" role="status">{{ toast() }}</div>
-  }
-
   @if (error()) {
     <div class="notice error" role="alert">{{ error() }}</div>
   }
@@ -14,23 +10,23 @@
   } @else if (post(); as current) {
     <app-post-card
       [post]="current"
-      [editing]="editing()"
-      [saving]="savingEdit()"
+      [editing]="editing"
+      [saving]="busy()"
       [teams]="myTeams()"
-      [companyLabel]="companyLabel()"
+      [companyName]="companyName()"
+      (edit)="onEdit($event)"
+      (cancelEdit)="cancelEdit()"
+      (saveEdit)="onSaveEdit($event)"
+      (remove)="onDelete($event)"
       (react)="onReact($event)"
       (saveToggle)="onSaveToggle($event)"
       (share)="onShare($event)"
-      (edit)="onEdit($event)"
-      (remove)="onDelete($event)"
-      (saveEdit)="onSaveEdit($event)"
-      (cancelEdit)="cancelEdit()"
     />
 
     <section class="comments rise-in">
       <h2>Comments</h2>
 
-      <form class="comment-form" (ngSubmit)="submitComment()">
+      <form class="comment-form" (ngSubmit)="addComment()">
         <textarea
           [(ngModel)]="commentText"
           name="commentText"
@@ -38,15 +34,13 @@
           maxlength="2000"
           placeholder="Write a comment..."
         ></textarea>
-        <button type="submit" [disabled]="!commentText.trim() || submitting()">
-          {{ submitting() ? 'Posting…' : 'Comment' }}
-        </button>
+        <button type="submit" [disabled]="!commentText.trim()">Comment</button>
       </form>
 
       <ul class="comment-list">
         @for (comment of comments(); track comment.id) {
           <li>
-            <span class="hex avatar">{{ initials(comment) }}</span>
+            <span class="hex avatar">{{ comment.authorFirstName[0] }}{{ comment.authorLastName[0] }}</span>
             <div class="comment-body">
               <div class="comment-head">
                 <strong>{{ comment.authorFirstName }} {{ comment.authorLastName }}</strong>

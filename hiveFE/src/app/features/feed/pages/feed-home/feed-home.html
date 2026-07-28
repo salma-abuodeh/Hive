@@ -2,14 +2,13 @@
   <header class="feed-header rise-in">
     <div>
       <h1>Home feed</h1>
-      <p>What's happening across {{ companyLabel() }}.</p>
+      <p>What's happening across {{ companyName() }}.</p>
     </div>
   </header>
 
   @if (toast()) {
     <div class="toast" role="status">{{ toast() }}</div>
   }
-
   @if (error()) {
     <div class="notice error" role="alert">{{ error() }}</div>
   }
@@ -30,12 +29,8 @@
       <div class="visibility-group">
         <label class="visibility">
           <span class="sr-only">Visibility</span>
-          <select
-            [(ngModel)]="visibilityType"
-            name="visibilityType"
-            (ngModelChange)="onVisibilityChange()"
-          >
-            <option value="COMPANY">Everyone at {{ companyLabel() }}</option>
+          <select [(ngModel)]="visibilityType" name="visibilityType" (ngModelChange)="onVisibilityChange()">
+            <option value="COMPANY">Everyone at {{ companyName() }}</option>
             @if (myTeams().length) {
               <option value="TEAM">Team only</option>
             }
@@ -55,8 +50,8 @@
       </div>
 
       <div class="composer-buttons">
-        <button type="submit" class="publish-btn" [disabled]="!content.trim() || publishing()">
-          {{ publishing() ? 'Publishing…' : 'Publish' }}
+        <button type="submit" class="publish-btn" [disabled]="!content.trim() || busy()">
+          {{ busy() ? 'Publishing…' : 'Publish' }}
         </button>
       </div>
     </div>
@@ -66,17 +61,17 @@
     @for (post of posts(); track post.id) {
       <app-post-card
         [post]="post"
-        [editing]="editingId() === post.id"
-        [saving]="savingEdit() && editingId() === post.id"
+        [editing]="editingId === post.id"
+        [saving]="busy() && editingId === post.id"
         [teams]="myTeams()"
-        [companyLabel]="companyLabel()"
+        [companyName]="companyName()"
+        (edit)="onEdit($event)"
+        (cancelEdit)="cancelEdit()"
+        (saveEdit)="onSaveEdit($event)"
+        (remove)="onDelete($event)"
         (react)="onReact($event)"
         (saveToggle)="onSaveToggle($event)"
         (share)="onShare($event)"
-        (edit)="onEdit($event)"
-        (remove)="onDelete($event)"
-        (saveEdit)="onSaveEdit($event)"
-        (cancelEdit)="cancelEdit()"
       />
     } @empty {
       @if (!loading()) {
@@ -88,7 +83,7 @@
     }
   </div>
 
-  @if (!lastPage()) {
+  @if (!lastPage) {
     <button type="button" class="load-more" (click)="loadFeed()" [disabled]="loading()">
       {{ loading() ? 'Loading…' : 'Load more' }}
     </button>
