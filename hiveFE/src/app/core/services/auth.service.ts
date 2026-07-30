@@ -65,18 +65,20 @@ export class AuthService {
     localStorage.removeItem(USER_KEY);
   }
 
-  isPlatformAdmin(): boolean {
+isPlatformAdmin(): boolean {
     return this.hasPermission('PLATFORM_MANAGE');
   }
 
   isManager(): boolean {
-    return this.hasPermission('USER_VIEW') && !this.isPlatformAdmin();
+    return this.hasPermission('USER_INVITE') && !this.isPlatformAdmin();
   }
 
   canManageUsers(): boolean {
-    return this.hasPermission('USER_VIEW') || this.hasPermission('PLATFORM_MANAGE');
+    return this.hasPermission('USER_INVITE')
+      || this.hasPermission('USER_UPDATE')
+      || this.hasPermission('USER_DEACTIVATE')
+      || this.isPlatformAdmin();
   }
-
   private saveSession(res: LoginResponse | RegisterResponse): void {
     if (!isPlatformBrowser(this.platformId)) return;
     localStorage.setItem(TOKEN_KEY, res.token);

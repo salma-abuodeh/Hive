@@ -16,14 +16,14 @@ export class Sidebar {
 
   readonly orgMenuOpen = signal(false);
 
-  private readonly workspaceItems: NavMenuItem[] = [
-    { name: 'Feed', url: '/dashboard', icon: 'feed' },
-    { name: 'Community', url: '/community', icon: 'community' },
-    { name: 'Notifications', url: '/notifications', icon: 'notifications' },
-    { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },
-  ];
-
-  readonly accountItems: NavMenuItem[] = [
+private readonly workspaceItems: NavMenuItem[] = [
+  { name: 'Feed', url: '/dashboard', icon: 'feed' },
+  { name: 'Events', url: '/events', icon: 'events' },
+  { name: 'Community', url: '/community', icon: 'community' },
+  { name: 'Notifications', url: '/notifications', icon: 'notifications' },
+  { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },
+];
+readonly accountItems: NavMenuItem[] = [
     { name: 'My Profile', url: '/profile', icon: 'profile' },
   ];
 

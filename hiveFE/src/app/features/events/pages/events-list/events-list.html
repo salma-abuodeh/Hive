@@ -1,0 +1,257 @@
+<section class="events-page">
+  <header class="welcome">
+    <div>
+      <p class="eyebrow">WORKSPACE</p>
+      <h1>Events</h1>
+      <p>Team activities and company-wide gatherings.</p>
+    </div>
+    <button class="gold-button" (click)="openCreateForm()">+ Create Event</button>
+  </header>
+
+  @if (error()) {
+    <p class="notice">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading events…</p>
+  } @else if (events().length === 0) {
+    <div class="panel empty-panel">
+      <p>No events yet. Create the first one for your team.</p>
+    </div>
+  } @else {
+    <div class="events-layout">
+      <div class="panel event-list">
+        @for (event of events(); track event.id) {
+          <div
+            class="event-list-item"
+            [class.active]="selectedEvent()?.id === event.id"
+            (click)="select(event)"
+          >
+            @if (event.imageUrl) {
+              <div class="event-thumb" [style.background-image]="'url(' + event.imageUrl + ')'"></div>
+            } @else {
+              <div class="event-date-block">
+                <span class="mon">{{ event.startTime | slice:5:7 }}/{{ event.startTime | slice:8:10 }}</span>
+              </div>
+            }
+            <div class="event-meta">
+              <h4>{{ event.title }}</h4>
+              <span>{{ event.location || 'No location set' }}</span>
+            </div>
+            @if (event.myRsvpStatus) {
+              <span class="rsvp-badge" [class]="'rsvp-' + event.myRsvpStatus.toLowerCase()">
+                {{ event.myRsvpStatus }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="panel event-detail">
+        @if (selectedEvent()) {
+          <div
+            class="event-detail-hero"
+            [style.background-image]="selectedEvent()!.imageUrl ? ('url(' + selectedEvent()!.imageUrl + ')') : null"
+          >
+            <div class="hero-overlay">
+              <h2>{{ selectedEvent()!.title }}</h2>
+            </div>
+          </div>
+
+          <div class="row-between">
+            <span class="pill">{{ selectedEvent()!.visibility }}</span>
+            <div class="detail-actions">
+              @if (canInvite(selectedEvent()!)) {
+                <button class="text-button" (click)="openInviteModal(selectedEvent()!)">Invite people</button>
+              }
+              @if (canManage(selectedEvent()!)) {
+                <button class="text-button" (click)="openEditForm(selectedEvent()!)">Edit</button>
+              }
+              @if (canDelete(selectedEvent()!)) {
+                <button class="text-button danger" (click)="remove(selectedEvent()!)">Delete</button>
+              }
+            </div>
+          </div>
+
+          @if (isInvitee(selectedEvent()!)) {
+            <div class="rsvp-row">
+              <span class="rsvp-label">Your response:</span>
+              <button
+                class="rsvp-btn accept"
+                [class.selected]="selectedEvent()!.myRsvpStatus === 'ACCEPTED'"
+                [disabled]="respondingStatus() === 'ACCEPTED'"
+                (click)="respond('ACCEPTED')"
+              >Accept</button>
+              <button
+                class="rsvp-btn maybe"
+                [class.selected]="selectedEvent()!.myRsvpStatus === 'MAYBE'"
+                [disabled]="respondingStatus() === 'MAYBE'"
+                (click)="respond('MAYBE')"
+              >Maybe</button>
+              <button
+                class="rsvp-btn decline"
+                [class.selected]="selectedEvent()!.myRsvpStatus === 'DECLINED'"
+                [disabled]="respondingStatus() === 'DECLINED'"
+                (click)="respond('DECLINED')"
+              >Decline</button>
+            </div>
+          }
+
+          <p class="muted description">
+            {{ selectedEvent()!.description || 'No description provided.' }}
+          </p>
+          <div class="detail-meta">
+            <div><strong>Starts</strong><span>{{ selectedEvent()!.startTime | date:'medium' }}</span></div>
+            <div><strong>Ends</strong><span>{{ selectedEvent()!.endTime | date:'medium' }}</span></div>
+            <div><strong>Created by</strong><span>{{ selectedEvent()!.createdByName }}</span></div>
+          </div>
+        } @else {
+          <p class="muted">Select an event to see details.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Create / Edit modal -->
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="closeForm()">
+      <form class="company-modal" (ngSubmit)="submit()" (click)="$event.stopPropagation()">
+        <button type="button" class="close" (click)="closeForm()">×</button>
+        <p class="eyebrow">{{ editingId != null ? 'EDIT EVENT' : 'NEW EVENT' }}</p>
+        <h2>{{ editingId != null ? 'Edit event' : 'Create event' }}</h2>
+
+        <label class="photo-field">
+          Cover photo <em>(preview only — not saved yet)</em>
+          <div class="photo-dropzone" [class.has-photo]="photoPreview()">
+            @if (photoPreview()) {
+              <img [src]="photoPreview()" alt="Event cover preview">
+              <button type="button" class="photo-remove" (click)="clearPhoto()">Remove</button>
+            } @else {
+              <span class="photo-placeholder">Click to add a cover photo</span>
+            }
+            <input type="file" accept="image/*" (change)="onPhotoSelected($event.target)">
+          </div>
+        </label>
+
+        <label>
+          Title
+          <input name="title" [(ngModel)]="title" required placeholder="Team offsite, training, celebration…">
+        </label>
+        <label>
+          Description
+          <textarea name="description" [(ngModel)]="description" placeholder="What should people know?"></textarea>
+        </label>
+
+        <div class="field-row">
+          <label>
+            Date
+            <input type="date" name="date" [(ngModel)]="date" required>
+          </label>
+          <label>
+            Start time
+            <input type="time" name="time" [(ngModel)]="time" required>
+          </label>
+          <label>
+            End time
+            <input type="time" name="endTime" [(ngModel)]="endTime" required>
+          </label>
+        </div>
+
+        <label>
+          Location
+          <input name="location" [(ngModel)]="location" placeholder="Main office, or a video call link">
+        </label>
+        <label>
+          Visibility
+          <select name="visibility" [(ngModel)]="visibility">
+            <option value="COMPANY">Company-wide</option>
+            <option value="TEAM">Team only</option>
+            <option value="PRIVATE">Private</option>
+          </select>
+        </label>
+
+        @if (formError()) {
+          <p class="notice">{{ formError() }}</p>
+        }
+
+        <button class="gold-button" type="submit" [disabled]="saving()">
+          @if (saving()) {
+            Saving…
+          } @else {
+            {{ editingId != null ? 'Save changes' : 'Publish event' }} →
+          }
+        </button>
+      </form>
+    </div>
+  }
+
+  <!-- Invite modal -->
+  @if (showInviteModal()) {
+    <div class="modal-backdrop" (click)="closeInviteModal()">
+      <div class="company-modal invite-modal" (click)="$event.stopPropagation()">
+        <button type="button" class="close" (click)="closeInviteModal()">×</button>
+        <p class="eyebrow">MANAGE INVITATIONS</p>
+        <h2>{{ selectedEvent()?.title }}</h2>
+
+        @if (inviteError()) {
+          <p class="notice">{{ inviteError() }}</p>
+        }
+
+        @if (inviteLoading()) {
+          <p class="muted">Loading…</p>
+        } @else {
+          <div class="invite-section">
+            <p class="section-label">Invited ({{ invitations().length }})</p>
+            @if (invitations().length === 0) {
+              <p class="muted small">No one invited yet.</p>
+            } @else {
+              <div class="invitee-list">
+                @for (invite of invitations(); track invite.userId) {
+                  <div class="invitee-row">
+                    <span class="invitee-name">{{ invite.userName }}</span>
+                    <span class="rsvp-badge small" [class]="'rsvp-' + invite.status.toLowerCase()">
+                      {{ invite.status }}
+                    </span>
+                    <button type="button" class="remove-btn" (click)="removeInvite(invite.userId)">Remove</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="invite-section">
+            <p class="section-label">Add people</p>
+            @if (companyUsers().length === 0) {
+              <p class="muted small">Everyone in the company is already invited.</p>
+            } @else {
+              <div class="invitee-list picker">
+                @for (user of companyUsers(); track user.id) {
+                  <label class="picker-row">
+                    <input
+                      type="checkbox"
+                      [checked]="selectedUserIds().has(user.id)"
+                      (change)="toggleUserSelection(user.id)"
+                    >
+                    <span>{{ user.firstName }} {{ user.lastName }}</span>
+                  </label>
+                }
+              </div>
+              <button
+                class="gold-button"
+                type="button"
+                [disabled]="selectedUserIds().size === 0 || sendingInvites()"
+                (click)="sendInvites()"
+              >
+                @if (sendingInvites()) {
+                  Sending…
+                } @else {
+                  Invite {{ selectedUserIds().size || '' }} {{ selectedUserIds().size === 1 ? 'person' : 'people' }} →
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>
