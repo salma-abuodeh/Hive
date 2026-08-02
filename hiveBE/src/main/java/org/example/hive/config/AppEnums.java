@@ -31,4 +31,21 @@ public final class AppEnums {
         ROLE,
         USER
     }
+
+    public enum PostType {
+        TEXT
+    }
+
+    public enum VisibilityType {
+        COMPANY,
+        TEAM
+    }
+
+    public enum ReactionType {
+        LIKE,
+        LOVE,
+        LAUGHING,
+        SAD,
+        ANGRY
+    }
 }

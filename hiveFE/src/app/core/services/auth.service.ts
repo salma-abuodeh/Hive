@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
 import {
+  CompanySummary,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -19,6 +20,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
+  private readonly usersUrl = `${environment.apiUrl}/users`;
 
   login(payload: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload).pipe(
@@ -32,6 +34,12 @@ export class AuthService {
     );
   }
 
+  switchCompany(companyId: number): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${this.usersUrl}/me/switch-company`, { companyId })
+      .pipe(tap((res) => this.saveSession(res)));
+  }
+
   getToken(): string | null {
     if (!isPlatformBrowser(this.platformId)) return null;
     return localStorage.getItem(TOKEN_KEY);
@@ -41,6 +49,25 @@ export class AuthService {
     if (!isPlatformBrowser(this.platformId)) return null;
     const raw = localStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
+  }
+
+  getCompanies(): CompanySummary[] {
+    return this.getUser()?.companies ?? [];
+  }
+
+  getActiveCompanyId(): number | null {
+    const user = this.getUser();
+    if (!user) return null;
+    if ('activeCompanyId' in user && user.activeCompanyId != null) {
+      return user.activeCompanyId;
+    }
+    return user.companies?.[0]?.id ?? null;
+  }
+
+  getActiveCompany(): CompanySummary | null {
+    const id = this.getActiveCompanyId();
+    if (id == null) return null;
+    return this.getCompanies().find((c) => c.id === id) ?? null;
   }
 
   getRole(): string | null {
@@ -75,6 +102,10 @@ export class AuthService {
 
   canManageUsers(): boolean {
     return this.hasPermission('USER_VIEW') || this.hasPermission('PLATFORM_MANAGE');
+  }
+
+  canManageTeams(): boolean {
+    return this.hasPermission('TEAM_VIEW') || this.hasPermission('TEAM_CREATE');
   }
 
   private saveSession(res: LoginResponse | RegisterResponse): void {

@@ -1,5 +1,6 @@
 package org.example.hive.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -67,5 +68,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ex.getStatus())
                 .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(PostException.class)
+    public ResponseEntity<ErrorResponseDto> handlePostException(PostException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(TeamException.class)
+    public ResponseEntity<ErrorResponseDto> handleTeamException(TeamException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponseDto(409, "Could not save changes due to a data conflict", LocalDateTime.now()));
     }
 }

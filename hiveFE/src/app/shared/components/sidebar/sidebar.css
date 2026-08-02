@@ -91,6 +91,11 @@
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
+.switch-caret app-icon {
+  width: 14px;
+  height: 14px;
+}
+
 .sidebar-org-switch.open .switch-caret {
   transform: rotate(180deg);
 }
@@ -128,17 +133,50 @@
   text-decoration: none;
 }
 
-.org-switch-menu a:hover {
+.org-switch-menu a:hover,
+.workspace-option:hover:not(:disabled) {
   background: var(--cream-dim);
 }
 
-.org-switch-menu a.current-org {
+.org-switch-menu a.current-org,
+.workspace-option.current-org {
   background: var(--amber-light);
   font-weight: 700;
 }
 
-.org-switch-menu a svg {
-  flex-shrink: 0;
+.workspace-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--espresso);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspace-option:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.workspace-option app-icon,
+.org-switch-menu a app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--umber-light);
+}
+
+.workspace-empty {
+  margin: 0;
+  padding: var(--sp-2);
+  font-size: var(--fs-xs);
   color: var(--umber-light);
 }
 
@@ -181,8 +219,7 @@
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
-.sidebar-link-btn svg {
-  flex-shrink: 0;
+.sidebar-link-btn app-icon {
   width: 18px;
   height: 18px;
 }

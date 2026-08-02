@@ -37,33 +37,44 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return loadUser(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public UserDetails loadUser(String email, Long companyId) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
         Set<GrantedAuthority> authorities = new LinkedHashSet<>();
-        Long companyId = null;
+        Long resolvedCompanyId = null;
 
         if (user.getPlatformRole() != null) {
             addPermissions(authorities, user.getPlatformRole());
         }
 
-        Optional<UserCompany> membership =
-                userCompanyRepository.findFirstByUser_IdAndActiveTrueOrderByJoinedAtDesc(user.getId());
+        Optional<UserCompany> membership = resolveMembership(user.getId(), companyId);
 
         if (membership.isPresent()) {
             UserCompany uc = membership.get();
-            companyId = uc.getCompany().getId();
+            resolvedCompanyId = uc.getCompany().getId();
             addPermissions(authorities, uc.getRole());
         }
 
         return new AuthUserPrincipal(
                 user.getId(),
-                companyId,
+                resolvedCompanyId,
                 user.getEmail(),
                 user.getPassword(),
                 Boolean.TRUE.equals(user.getActive()),
                 authorities
         );
+    }
+
+    private Optional<UserCompany> resolveMembership(Long userId, Long companyId) {
+        if (companyId != null) {
+            return userCompanyRepository.findByUser_IdAndCompany_IdAndActiveTrue(userId, companyId);
+        }
+        return userCompanyRepository.findFirstByUser_IdAndActiveTrueOrderByJoinedAtDesc(userId);
     }
 
     private void addPermissions(Set<GrantedAuthority> authorities, Role role) {

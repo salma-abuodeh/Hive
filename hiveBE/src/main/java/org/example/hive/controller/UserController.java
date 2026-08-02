@@ -24,7 +24,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    @PreAuthorize("hasPermission(null, 'PLATFORM_MANAGE')")
     public Page<UserResponseDto> listUsersByAdmin(
             @RequestParam(required = false) Boolean active,
             Pageable pageable) {
@@ -32,20 +32,20 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    @PreAuthorize("hasPermission(null, 'PLATFORM_MANAGE')")
     public UserResponseDto getUserByAdmin(@PathVariable Long id) {
         return userService.getUserByAdmin(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    @PreAuthorize("hasPermission(null, 'PLATFORM_MANAGE')")
     public UserResponseDto createUserByAdmin(@Valid @RequestBody CreateUserRequest req) {
         return userService.createUserByAdmin(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    @PreAuthorize("hasPermission(null, 'PLATFORM_MANAGE')")
     public UserResponseDto updateUserByAdmin(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest req,
@@ -55,7 +55,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    @PreAuthorize("hasPermission(null, 'PLATFORM_MANAGE')")
     public void deleteUserByAdmin(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
@@ -63,7 +63,7 @@ public class UserController {
     }
 
     @GetMapping("/company")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_VIEW)")
+    @PreAuthorize("hasPermission(null, 'USER_VIEW')")
     public Page<UserResponseDto> listUsersByManager(
             @RequestParam(required = false) Boolean active,
             Pageable pageable,
@@ -72,7 +72,7 @@ public class UserController {
     }
 
     @GetMapping("/company/{id}")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_VIEW)")
+    @PreAuthorize("hasPermission(null, 'USER_VIEW')")
     public UserResponseDto getUserByManager(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
@@ -81,7 +81,7 @@ public class UserController {
 
     @PostMapping("/company")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_INVITE)")
+    @PreAuthorize("hasPermission(null, 'USER_INVITE')")
     public UserResponseDto createUserByManager(
             @Valid @RequestBody CreateUserRequest req,
             @AuthenticationPrincipal AuthUserPrincipal principal) {
@@ -89,7 +89,7 @@ public class UserController {
     }
 
     @PutMapping("/company/{id}")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_UPDATE)")
+    @PreAuthorize("hasPermission(null, 'USER_UPDATE')")
     public UserResponseDto updateUserByManager(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest req,
@@ -99,7 +99,7 @@ public class UserController {
 
     @DeleteMapping("/company/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).USER_DEACTIVATE)")
+    @PreAuthorize("hasPermission(null, 'USER_DEACTIVATE')")
     public void deleteUserByManager(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUserPrincipal principal) {

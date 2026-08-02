@@ -15,6 +15,7 @@ public class LoginResponseDto {
     private String email;
     private String role;
     private Boolean active;
+    private Long activeCompanyId;
     private List<CompanySummaryDto> companies;
     private List<String> permissions;
 }
