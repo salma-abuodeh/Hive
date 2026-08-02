@@ -68,4 +68,10 @@ public class GlobalExceptionHandler {
                 .status(ex.getStatus())
                 .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
     }
+    @ExceptionHandler(PollException.class)
+    public ResponseEntity<ErrorResponseDto> handlePollException(PollException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
 }

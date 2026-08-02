@@ -29,6 +29,21 @@ public final class AppEnums {
         COMPANY,
         TEAM,
         ROLE,
-        USER
+        USER,
+        EVENT,
+        POLL
+    }
+
+    public enum EventVisibility {
+        COMPANY,
+        TEAM,
+        PRIVATE
+    }
+
+    public enum RsvpStatus {
+        INVITED,
+        ACCEPTED,
+        DECLINED,
+        MAYBE
     }
 }
