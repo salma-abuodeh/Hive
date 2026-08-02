@@ -70,6 +70,13 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(EventException.class)
+    public ResponseEntity<ErrorResponseDto> handleEventException(EventException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(PostException.class)
     public ResponseEntity<ErrorResponseDto> handlePostException(PostException ex) {
         return ResponseEntity
