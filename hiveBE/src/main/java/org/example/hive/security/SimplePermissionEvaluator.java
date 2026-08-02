@@ -7,10 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 
-/**
- * Treats permission strings as authorities on the authentication
- * (e.g. hasPermission(null, 'USER_VIEW')).
- */
 @Component
 public class SimplePermissionEvaluator implements PermissionEvaluator {
 

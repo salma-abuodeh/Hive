@@ -37,27 +37,27 @@ public class CompanyController {
     }
 
     @PostMapping("/admin")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).PLATFORM_MANAGE)")
+    @PreAuthorize("hasPermission(null, 'PLATFORM_MANAGE')")
     @ResponseStatus(HttpStatus.CREATED)
     public CompanyResponse createCompanyByAdmin(@Valid @RequestBody CompanyRequest req) {
         return companyService.create(req);
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).COMPANY_VIEW)")
+    @PreAuthorize("hasPermission(null, 'COMPANY_VIEW')")
     public CompanyResponse getMine(@AuthenticationPrincipal AuthUserPrincipal principal) {
         return companyService.getById(principal.getCompanyId());
     }
 
     @PutMapping("/me")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).COMPANY_UPDATE)")
+    @PreAuthorize("hasPermission(null, 'COMPANY_UPDATE')")
     public CompanyResponse updateMine(@Valid @RequestBody CompanyRequest req,
                                       @AuthenticationPrincipal AuthUserPrincipal principal) {
         return companyService.update(principal.getCompanyId(), req);
     }
 
     @DeleteMapping("/me")
-    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).COMPANY_ARCHIVE)")
+    @PreAuthorize("hasPermission(null, 'COMPANY_ARCHIVE')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void archiveMine(@AuthenticationPrincipal AuthUserPrincipal principal) {
         companyService.archive(principal.getCompanyId());

@@ -33,6 +33,9 @@ public class UserCompany {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
+    @Column(name = "job_title", length = 150)
+    private String jobTitle;
+
     @Column(nullable = false)
     private Boolean active;
 

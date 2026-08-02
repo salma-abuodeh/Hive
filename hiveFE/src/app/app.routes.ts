@@ -1,8 +1,11 @@
 import { Routes } from '@angular/router';
 import { Login } from './features/auth/pages/login/login';
 import { DashboardHome } from './features/dashboard/pages/dashboard-home/dashboard-home';
-import { CommunityFeed } from './features/community/pages/community-feed/community-feed';
 import { NotificationsHome } from './features/notifications/pages/notifications-home/notifications-home';
+import { FeedHome } from './features/feed/pages/feed-home/feed-home';
+import { PostDetail } from './features/feed/pages/post-detail/post-detail';
+import { SavedPosts } from './features/feed/pages/saved-posts/saved-posts';
+import { CompanyHome } from './features/company/pages/company-home/company-home';
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
 import { AppLayout } from './layouts/app-layout/app-layout';
 import { authGuard } from './core/guards/auth.guard';
@@ -27,7 +30,10 @@ export const routes: Routes = [
     component: AppLayout,
     children: [
       { path: 'dashboard', component: DashboardHome, canActivate: [authGuard] },
-      { path: 'community', component: CommunityFeed, canActivate: [authGuard] },
+      { path: 'feed', component: FeedHome, canActivate: [authGuard] },
+      { path: 'feed/:id', component: PostDetail, canActivate: [authGuard] },
+      { path: 'saved', component: SavedPosts, canActivate: [authGuard] },
+      { path: 'company', component: CompanyHome, canActivate: [authGuard] },
       { path: 'notifications', component: NotificationsHome, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
       { path: 'users', component: UsersList, canActivate: [authGuard, adminGuard] },

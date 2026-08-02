@@ -45,4 +45,21 @@ public final class AppEnums {
         DECLINED,
         MAYBE
     }
+
+    public enum PostType {
+        TEXT
+    }
+
+    public enum VisibilityType {
+        COMPANY,
+        TEAM
+    }
+
+    public enum ReactionType {
+        LIKE,
+        LOVE,
+        LAUGHING,
+        SAD,
+        ANGRY
+    }
 }
