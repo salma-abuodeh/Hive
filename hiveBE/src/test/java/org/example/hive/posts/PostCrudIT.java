@@ -7,14 +7,17 @@ import org.example.hive.dto.request.CreateCommentRequest;
 import org.example.hive.dto.request.CreatePostRequest;
 import org.example.hive.dto.request.ReactToPostRequest;
 import org.example.hive.dto.request.UpdatePostRequest;
+import org.example.hive.dto.response.PostResponse;
 import org.example.hive.integration.BaseIntegrationTest;
 import org.example.hive.model.*;
 import org.example.hive.repository.PostRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-
+import org.springframework.http.*;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -327,5 +330,40 @@ public class PostCrudIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$[0].content").value("Nice Post!"))
                 .andExpect(jsonPath("$[0].authorFirstName").value(user.getFirstName()))
                 .andExpect(jsonPath("$[0].authorLastName").value(user.getLastName()));
+    }
+    //===================================================================
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void shouldSavePost() {
+
+
+        Company company = factory.createCompany();
+
+        Role role = factory.createRole(company);
+
+        User user = factory.createUser();
+
+        factory.assignUserToCompany(user, company, role);
+
+        Post post = factory.createCompanyPost(company, user);
+
+        String token = jwtHelper.generate(user, company);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<PostResponse> response = restTemplate.exchange(
+                "/posts/" + post.getId() + "/save",
+                HttpMethod.POST,
+                entity,
+                PostResponse.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().isSavedByMe());
+        assertEquals(post.getId(), response.getBody().getId());
+        assertEquals(post.getContent(), response.getBody().getContent());
     }
 }

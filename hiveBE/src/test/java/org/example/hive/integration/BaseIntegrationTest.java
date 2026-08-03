@@ -1,6 +1,7 @@
 package org.example.hive.integration;
 
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.hive.security.JwtTestHelper;
 import org.example.hive.util.TestDataFactory;
 import org.junit.jupiter.api.TestInstance;
@@ -15,9 +16,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-@SpringBootTest
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+//@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@AutoConfigureTestRestTemplate
 @Testcontainers
 @Transactional
 @ActiveProfiles("test")
@@ -47,5 +50,6 @@ public abstract class BaseIntegrationTest {
 
     @Autowired
     protected TestDataFactory factory;
-
+    @Autowired
+    protected TestRestTemplate restTemplate;
 }

@@ -49,7 +49,7 @@ public class TestDataFactory {
         Company company = Company.builder()
                 .name("Test Company")
                 .type(CompanyType.COMPANY)
-                .domain("test-company.com")
+                .domain("test-company-" + System.nanoTime() + ".com")
                 .logoUrl(null)
                 .build();
 
