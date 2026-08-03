@@ -35,6 +35,7 @@ public abstract class BaseIntegrationTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
     }
+
     @Autowired
     protected MockMvc mockMvc;
 

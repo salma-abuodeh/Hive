@@ -1,8 +1,11 @@
 package org.example.hive.posts;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.hive.config.AppEnums;
 import org.example.hive.config.AppEnums.VisibilityType;
+import org.example.hive.dto.request.CreateCommentRequest;
 import org.example.hive.dto.request.CreatePostRequest;
+import org.example.hive.dto.request.ReactToPostRequest;
 import org.example.hive.dto.request.UpdatePostRequest;
 import org.example.hive.integration.BaseIntegrationTest;
 import org.example.hive.model.*;
@@ -131,7 +134,7 @@ public class PostCrudIT extends BaseIntegrationTest {
     @Test
     void shouldDeleteOwnPost() throws Exception {
 
-        // Arrange
+
         Company company = factory.createCompany();
 
         Role role = factory.createRole(company);
@@ -152,5 +155,177 @@ public class PostCrudIT extends BaseIntegrationTest {
                 .orElseThrow();
 
         assertThat(deleted.getActive()).isFalse();
+    }
+    @Test
+    void shouldGetCompanyPostById() throws Exception {
+
+    
+    Company company = factory.createCompany();
+
+    Role role = factory.createRole(company);
+
+    User user = factory.createUser();
+
+    factory.assignUserToCompany(user, company, role);
+
+    Post post = factory.createCompanyPost(company, user);
+
+    String token = jwtHelper.generate(user, company);
+
+    mockMvc.perform(get("/posts/{id}", post.getId())
+                    .header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(post.getId()))
+            .andExpect(jsonPath("$.content").value(post.getContent()))
+            .andExpect(jsonPath("$.visibilityType").value("COMPANY"))
+            .andExpect(jsonPath("$.authorId").value(user.getId()))
+            .andExpect(jsonPath("$.authorFirstName").value(user.getFirstName()))
+            .andExpect(jsonPath("$.authorLastName").value(user.getLastName()))
+            .andExpect(jsonPath("$.teamId").doesNotExist())
+            .andExpect(jsonPath("$.likeCount").value(0))
+            .andExpect(jsonPath("$.commentCount").value(0))
+            .andExpect(jsonPath("$.savedByMe").value(false))
+            .andExpect(jsonPath("$.ownedByMe").value(true));
+}
+    @Test
+    void shouldListCompanyFeed() throws Exception {
+
+        Company company = factory.createCompany();
+
+        Role role = factory.createRole(company);
+
+        User user = factory.createUser();
+
+        factory.assignUserToCompany(user, company, role);
+
+        factory.createCompanyPost(company, user);
+        factory.createCompanyPost(company, user);
+
+        String token = jwtHelper.generate(user, company);
+
+        mockMvc.perform(get("/posts")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].visibilityType").value("COMPANY"))
+                .andExpect(jsonPath("$.content[1].visibilityType").value("COMPANY"));
+    }
+    @Test
+    void shouldListSavedPosts() throws Exception {
+
+
+        Company company = factory.createCompany();
+
+        Role role = factory.createRole(company);
+
+        User user = factory.createUser();
+
+        factory.assignUserToCompany(user, company, role);
+
+        Post savedPost = factory.createCompanyPost(company, user);
+
+        factory.savePost(user, savedPost);
+
+        String token = jwtHelper.generate(user, company);
+
+
+        mockMvc.perform(get("/posts/saved")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(savedPost.getId()))
+                .andExpect(jsonPath("$.content[0].content").value(savedPost.getContent()))
+                .andExpect(jsonPath("$.content[0].savedByMe").value(true))
+                .andExpect(jsonPath("$.content[0].ownedByMe").value(true))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
+    }
+    @Test
+    void shouldLikePost() throws Exception {
+
+
+        Company company = factory.createCompany();
+
+        Role role = factory.createRole(company);
+
+        User user = factory.createUser();
+
+        factory.assignUserToCompany(user, company, role);
+
+        Post post = factory.createCompanyPost(company, user);
+
+        String token = jwtHelper.generate(user, company);
+
+        ReactToPostRequest request = new ReactToPostRequest();
+        request.setReactionType(AppEnums.ReactionType.LIKE);
+
+
+        mockMvc.perform(post("/posts/{id}/reactions", post.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(post.getId()))
+                .andExpect(jsonPath("$.myReaction").value("LIKE"))
+                .andExpect(jsonPath("$.likeCount").value(1));
+    }
+
+    @Test
+    void shouldAddComment() throws Exception {
+
+
+        Company company = factory.createCompany();
+
+        Role role = factory.createRole(company);
+
+        User user = factory.createUser();
+
+        factory.assignUserToCompany(user, company, role);
+
+        Post post = factory.createCompanyPost(company, user);
+
+        String token = jwtHelper.generate(user, company);
+
+        CreateCommentRequest request = new CreateCommentRequest();
+        request.setContent("Nice post!");
+
+
+        mockMvc.perform(post("/posts/{id}/comments", post.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.content").value("Nice post!"))
+                .andExpect(jsonPath("$.authorFirstName").value(user.getFirstName()))
+                .andExpect(jsonPath("$.authorLastName").value(user.getLastName()))
+                .andExpect(jsonPath("$.ownedByMe").value(true));
+    }
+    @Test
+    void shouldListComments() throws Exception {
+
+        Company company = factory.createCompany();
+
+        Role role = factory.createRole(company);
+
+        User user = factory.createUser();
+
+        factory.assignUserToCompany(user, company, role);
+
+        Post post = factory.createCompanyPost(company, user);
+
+        factory.createComment(post, user);
+
+        String token = jwtHelper.generate(user, company);
+
+        mockMvc.perform(get("/posts/{id}/comments", post.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].content").value("Nice Post!"))
+                .andExpect(jsonPath("$[0].authorFirstName").value(user.getFirstName()))
+                .andExpect(jsonPath("$[0].authorLastName").value(user.getLastName()));
     }
 }
