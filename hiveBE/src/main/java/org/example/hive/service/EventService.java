@@ -1,5 +1,6 @@
 package org.example.hive.service;
 
+import org.example.hive.config.AppEnums.EventVisibility;
 import org.example.hive.config.AppEnums.RsvpStatus;
 import org.example.hive.dto.request.EventRequest;
 import org.example.hive.dto.request.InviteUsersRequest;
@@ -16,8 +17,10 @@ import org.example.hive.model.User;
 import org.example.hive.repository.CompanyRepository;
 import org.example.hive.repository.EventRepository;
 import org.example.hive.repository.EventRsvpRepository;
+import org.example.hive.repository.TeamRepository;
 import org.example.hive.repository.UserCompanyRepository;
 import org.example.hive.repository.UserRepository;
+import org.example.hive.repository.UserTeamRepository;
 import org.example.hive.security.Permissions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,27 +30,37 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Service
 public class EventService {
+
+    private static final Long NO_TEAM_SENTINEL = -1L;
 
     private final EventRepository eventRepository;
     private final EventRsvpRepository eventRsvpRepository;
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final UserCompanyRepository userCompanyRepository;
+    private final TeamRepository teamRepository;
+    private final UserTeamRepository userTeamRepository;
 
     public EventService(EventRepository eventRepository,
                         EventRsvpRepository eventRsvpRepository,
                         UserRepository userRepository,
                         CompanyRepository companyRepository,
-                        UserCompanyRepository userCompanyRepository) {
+                        UserCompanyRepository userCompanyRepository,
+                        TeamRepository teamRepository,
+                        UserTeamRepository userTeamRepository) {
         this.eventRepository = eventRepository;
         this.eventRsvpRepository = eventRsvpRepository;
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.userCompanyRepository = userCompanyRepository;
+        this.teamRepository = teamRepository;
+        this.userTeamRepository = userTeamRepository;
     }
 
     @Transactional
@@ -57,9 +70,11 @@ public class EventService {
                 .orElseThrow(() -> new EventException("Company not found", HttpStatus.NOT_FOUND));
 
         validateTimes(req);
+        Team team = resolveTeam(companyId, userId, req.getVisibility(), req.getTeamId());
 
         Event event = Event.builder()
                 .company(company)
+                .team(team)
                 .createdBy(creator)
                 .title(req.getTitle())
                 .description(req.getDescription())
@@ -69,17 +84,15 @@ public class EventService {
                 .visibility(req.getVisibility())
                 .build();
 
-        if (req.getTeamId() != null) {
-            event.setTeam(Team.builder().id(req.getTeamId()).build());
-        }
-
         event = eventRepository.save(event);
         return EventMapper.toResponse(event, null);
     }
 
     @Transactional(readOnly = true)
     public Page<EventResponse> list(Long requesterId, Long companyId, Pageable pageable) {
-        return eventRepository.findAllByCompany_IdAndActiveTrue(companyId, pageable)
+        Collection<Long> teamIds = teamIdsForQuery(requesterId, companyId);
+        boolean hasOverride = hasOverride(Permissions.EVENT_UPDATE);
+        return eventRepository.findVisibleForUser(companyId, requesterId, teamIds, hasOverride, pageable)
                 .map(event -> toResponseWithMyRsvp(event, requesterId));
     }
 
@@ -96,14 +109,16 @@ public class EventService {
         assertCanManage(event, requesterId, Permissions.EVENT_UPDATE);
         validateTimes(req);
 
+        EventVisibility newVisibility = req.getVisibility() != null ? req.getVisibility() : event.getVisibility();
+        Team team = resolveTeam(companyId, requesterId, newVisibility, req.getTeamId());
+
         event.setTitle(req.getTitle());
         event.setDescription(req.getDescription());
         event.setLocation(req.getLocation());
         event.setStartTime(req.getStartTime());
         event.setEndTime(req.getEndTime());
-        if (req.getVisibility() != null) {
-            event.setVisibility(req.getVisibility());
-        }
+        event.setVisibility(newVisibility);
+        event.setTeam(team);
 
         event = eventRepository.save(event);
         return toResponseWithMyRsvp(event, requesterId);
@@ -180,10 +195,7 @@ public class EventService {
         if (event.getCreatedBy().getId().equals(requesterId)) {
             return;
         }
-        boolean hasOverride = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(overridePermission::equals);
-        if (!hasOverride) {
+        if (!hasOverride(overridePermission)) {
             throw new EventException("Only the event owner or a manager can perform this action", HttpStatus.FORBIDDEN);
         }
     }
@@ -193,10 +205,14 @@ public class EventService {
             return;
         }
         switch (event.getVisibility()) {
-            case COMPANY, TEAM -> {
-                // TEAM treated same as COMPANY for now — no TeamRepository/
-                // UserTeamRepository exists yet to check real membership.
-                //when we will merge the code that contains teams we will change this
+            case COMPANY -> {
+                // No further restriction — every company member can view.
+            }
+            case TEAM -> {
+                if (event.getTeam() == null
+                        || !userTeamRepository.existsByUser_IdAndTeam_Id(requesterId, event.getTeam().getId())) {
+                    throw new EventException("You do not have access to this event", HttpStatus.FORBIDDEN);
+                }
             }
             case PRIVATE -> {
                 if (!eventRsvpRepository.existsByEvent_IdAndUser_Id(event.getId(), requesterId)) {
@@ -204,6 +220,39 @@ public class EventService {
                 }
             }
         }
+    }
+
+    private boolean hasOverride(String permission) {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(permission::equals);
+    }
+
+    // Mirrors PostService.resolveTeam(): COMPANY/PRIVATE events carry no team,
+    // TEAM events must reference a real, active team in this company that the
+    // creator actually belongs to.
+    private Team resolveTeam(Long companyId, Long userId, EventVisibility visibility, Long teamId) {
+        if (visibility != EventVisibility.TEAM) {
+            return null;
+        }
+        if (teamId == null) {
+            throw new EventException("Team is required for team visibility", HttpStatus.BAD_REQUEST);
+        }
+        Team team = teamRepository.findByIdAndCompany_IdAndActiveTrue(teamId, companyId)
+                .orElseThrow(() -> new EventException("Team not found", HttpStatus.NOT_FOUND));
+        boolean member = userTeamRepository.existsByUser_IdAndTeam_Id(userId, teamId);
+        if (!member) {
+            throw new EventException("You must be a member of the team", HttpStatus.FORBIDDEN);
+        }
+        return team;
+    }
+
+    private Collection<Long> teamIdsForQuery(Long userId, Long companyId) {
+        List<Long> ids = userTeamRepository.findTeamIdsByUserAndCompany(userId, companyId);
+        if (ids.isEmpty()) {
+            return Collections.singletonList(NO_TEAM_SENTINEL);
+        }
+        return ids;
     }
 
     private void validateTimes(EventRequest req) {

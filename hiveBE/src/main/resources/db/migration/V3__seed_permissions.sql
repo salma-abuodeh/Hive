@@ -25,6 +25,10 @@ INSERT INTO permissions (name, description, active) VALUES
                                                         ('EVENT_UPDATE', 'Update any event in the company (override)', true),
                                                         ('EVENT_DELETE', 'Delete any event in the company (override)', true),
                                                         ('EVENT_INVITE', 'Manage invitations for any event in the company (override)', true),
+                                                        ('POLL_VIEW', 'View polls', true),
+                                                        ('POLL_CREATE', 'Create polls', true),
+                                                        ('POLL_UPDATE', 'Update any poll in the company (override)', true),
+                                                        ('POLL_DELETE', 'Delete any poll in the company (override)', true),
                                                         ('PLATFORM_MANAGE', 'Platform-wide administration', true);
 
 -- Platform Administrator: all permissions
@@ -35,7 +39,7 @@ FROM roles r
 WHERE r.name = 'Platform Administrator'
   AND r.company_id IS NULL;
 
--- Manager: company + user management + events (including override on any event)
+-- Manager: company + user management + events + polls (including overrides)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r
@@ -59,12 +63,16 @@ FROM roles r
                                           'EVENT_CREATE',
                                           'EVENT_UPDATE',
                                           'EVENT_DELETE',
-                                          'EVENT_INVITE'
+                                          'EVENT_INVITE',
+                                          'POLL_VIEW',
+                                          'POLL_CREATE',
+                                          'POLL_UPDATE',
+                                          'POLL_DELETE'
     )
 WHERE r.name = 'Manager'
   AND r.company_id IS NULL;
 
--- Employee: baseline visibility + community features (view-only, plus own events)
+-- Employee: baseline visibility + community features (view-only, plus own events/polls)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r
@@ -73,7 +81,9 @@ FROM roles r
                                           'TEAM_VIEW',
                                           'USER_VIEW',
                                           'EVENT_VIEW',
-                                          'EVENT_CREATE'
+                                          'EVENT_CREATE',
+                                          'POLL_VIEW',
+                                          'POLL_CREATE'
     )
 WHERE r.name = 'Employee'
   AND r.company_id IS NULL;

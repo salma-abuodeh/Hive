@@ -30,7 +30,8 @@ public final class AppEnums {
         TEAM,
         ROLE,
         USER,
-        EVENT
+        EVENT,
+        POLL
     }
 
     public enum EventVisibility {
@@ -47,7 +48,7 @@ public final class AppEnums {
     }
 
     public enum PostType {
-        TEXT
+        ANNOUNCEMENT, TEXT
     }
 
     public enum VisibilityType {
