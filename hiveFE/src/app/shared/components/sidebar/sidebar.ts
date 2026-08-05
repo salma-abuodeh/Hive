@@ -19,6 +19,17 @@ export class Sidebar {
   readonly orgMenuOpen = signal(false);
   readonly switching = signal(false);
 
+private readonly worksprivate readonly workspaceItems: NavMenuItem[] = [
+  { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
+  { name: 'Feed', url: '/feed', icon: 'feed' },
+  { name: 'Events', url: '/events', icon: 'events' },
+  { name: 'Community', url: '/community', icon: 'community' },
+  { name: 'Saved', url: '/saved', icon: 'saved' },
+  { name: 'Notifications', url: '/notifications', icon: 'notifications' },
+  { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },
+  { name: 'Company', url: '/company', icon: 'company', requiresManageTeams: true },
+];
+readonly accountItems: NavMenuItem[] = [    { name: 'My Profile', url: '/profile', icon: 'profile' },
   private readonly workspaceItems: NavMenuItem[] = [
     { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
     { name: 'Feed', url: '/feed', icon: 'feed' },

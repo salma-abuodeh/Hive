@@ -10,8 +10,8 @@ export type AppIcon =
   | 'signout'
   | 'search'
   | 'plus'
-  | 'chevronDown';
-
+  | 'chevronDown'
+  | 'events';
 export type NavIcon = AppIcon;
 
 export interface NavMenuItem {
