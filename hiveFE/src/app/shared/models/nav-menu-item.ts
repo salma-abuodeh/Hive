@@ -1,7 +1,23 @@
-export type NavIcon = 'feed' | 'community' | 'notifications' | 'people' | 'profile' | 'events' | 'signout';
+export type AppIcon =
+  | 'dashboard'
+  | 'feed'
+  | 'community'
+  | 'notifications'
+  | 'people'
+  | 'company'
+  | 'profile'
+  | 'saved'
+  | 'signout'
+  | 'search'
+  | 'plus'
+  | 'chevronDown'
+  | 'events';
+export type NavIcon = AppIcon;
+
 export interface NavMenuItem {
   name: string;
   url: string;
-  icon: NavIcon;
+  icon: AppIcon;
   requiresManageUsers?: boolean;
+  requiresManageTeams?: boolean;
 }
