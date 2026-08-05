@@ -15,6 +15,8 @@ public interface UserCompanyRepository extends JpaRepository<UserCompany, Long> 
 
     Optional<UserCompany> findByUser_IdAndCompany_Id(Long userId, Long companyId);
 
+    Optional<UserCompany> findByUser_IdAndCompany_IdAndActiveTrue(Long userId, Long companyId);
+
     boolean existsByUser_IdAndCompany_Id(Long userId, Long companyId);
 
     List<UserCompany> findAllByUser_IdAndActiveTrue(Long userId);

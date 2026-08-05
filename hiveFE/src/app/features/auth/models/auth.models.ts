@@ -23,6 +23,7 @@ export interface LoginResponse {
   email: string;
   role: string;
   active: boolean;
+  activeCompanyId?: number | null;
   companies: CompanySummary[];
   permissions: string[];
 }
@@ -35,6 +36,7 @@ export interface RegisterResponse {
   email: string;
   role: string;
   active: boolean;
+  activeCompanyId?: number | null;
   companies?: CompanySummary[];
   permissions?: string[];
 }

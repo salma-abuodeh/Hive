@@ -29,6 +29,37 @@ public final class AppEnums {
         COMPANY,
         TEAM,
         ROLE,
-        USER
+        USER,
+        EVENT
+    }
+
+    public enum EventVisibility {
+        COMPANY,
+        TEAM,
+        PRIVATE
+    }
+
+    public enum RsvpStatus {
+        INVITED,
+        ACCEPTED,
+        DECLINED,
+        MAYBE
+    }
+
+    public enum PostType {
+        TEXT
+    }
+
+    public enum VisibilityType {
+        COMPANY,
+        TEAM
+    }
+
+    public enum ReactionType {
+        LIKE,
+        LOVE,
+        LAUGHING,
+        SAD,
+        ANGRY
     }
 }

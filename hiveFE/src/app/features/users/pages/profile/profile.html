@@ -1,55 +1,207 @@
-<div class="profile-page">
-    <mat-card class="profile-card">
-      <h2>Profile</h2>
-  
-      @if (loading()) {
-        <p>Loading...</p>
-      } @else {
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>First name</mat-label>
-          <input matInput [(ngModel)]="firstName" />
-        </mat-form-field>
-  
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Last name</mat-label>
-          <input matInput [(ngModel)]="lastName" />
-        </mat-form-field>
-  
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email</mat-label>
-          <input matInput [(ngModel)]="email" />
-        </mat-form-field>
-  
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>New password (optional)</mat-label>
-          <input matInput type="password" [(ngModel)]="password" />
-        </mat-form-field>
-  
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Current password (required to change email/password)</mat-label>
-          <input matInput type="password" [(ngModel)]="currentPassword" />
-        </mat-form-field>
-  
-        @if (error()) {
-          <p class="error">{{ error() }}</p>
-        }
-        @if (success()) {
-          <p class="success">{{ success() }}</p>
-        }
-  
-        <button
-          mat-raised-button
-          color="primary"
-          class="full-width"
-          [disabled]="saving()"
-          (click)="save()"
-        >
-          @if (saving()) {
-            Saving...
-          } @else {
-            Save
+<section class="profile-page rise-in">
+  <header class="page-head">
+    <div>
+      <h1>My profile</h1>
+      <p>Everything people see when they open your profile.</p>
+    </div>
+    @if (!loading() && !editing()) {
+      <button type="button" class="edit-btn" (click)="startEdit()">Edit profile</button>
+    }
+  </header>
+
+  @if (error() && !editing()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="loading-label">Loading profile…</p>
+  } @else {
+    <article class="hero-card">
+      <div class="hero-main">
+        <span class="hex avatar">{{ initials() }}</span>
+        <div class="hero-copy">
+          <h2>{{ fullName() }}</h2>
+          <p class="headline">{{ headline() }}</p>
+          <div class="meta-row">
+            <span class="meta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 6h16v12H4z"/>
+                <path d="M4 8l8 5 8-5"/>
+              </svg>
+              {{ email }}
+            </span>
+            <span class="meta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M3 21h18M6 21V9l6-4 6 4v12M9 21v-6h6v6"/>
+              </svg>
+              {{ companyName() }}
+            </span>
+            @if (roleName) {
+              <span class="meta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <circle cx="12" cy="8" r="3.2"/>
+                  <path d="M4 20c1.2-3.8 4-6 8-6s6.8 2.2 8 6"/>
+                </svg>
+                {{ roleName }}
+              </span>
+            }
+          </div>
+
+          @if (teams().length) {
+            <div class="hero-teams">
+              @for (t of teams(); track t.id) {
+                <span class="chip">{{ t.name }}</span>
+              }
+            </div>
           }
-        </button>
-      }
-    </mat-card>
-  </div>
+        </div>
+      </div>
+    </article>
+
+    <nav class="tabs" aria-label="Profile sections">
+      <button type="button" [class.active]="tab() === 'about'" (click)="setTab('about')">About</button>
+      <button type="button" [class.active]="tab() === 'posts'" (click)="setTab('posts')">Posts</button>
+    </nav>
+
+    @if (tab() === 'about') {
+      <section class="content-card">
+        @if (editing()) {
+          <h3>Edit profile</h3>
+          <form class="profile-form" (ngSubmit)="save()">
+            <div class="field-row">
+              <label class="field">
+                <span>First name</span>
+                <input type="text" name="firstName" [(ngModel)]="firstName" required />
+              </label>
+              <label class="field">
+                <span>Last name</span>
+                <input type="text" name="lastName" [(ngModel)]="lastName" required />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Email</span>
+              <input type="email" name="email" [(ngModel)]="email" required />
+            </label>
+
+            <div class="divider"><span>Password</span></div>
+
+            <label class="field">
+              <span>New password <em>(optional)</em></span>
+              <input type="password" name="password" [(ngModel)]="password" placeholder="Leave blank to keep current" />
+            </label>
+
+            <label class="field">
+              <span>Current password <em>(required to change email or password)</em></span>
+              <input type="password" name="currentPassword" [(ngModel)]="currentPassword" />
+            </label>
+
+            @if (error()) {
+              <p class="notice error" role="alert">{{ error() }}</p>
+            }
+            @if (success()) {
+              <p class="notice success" role="status">{{ success() }}</p>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="ghost-btn" (click)="cancelEdit()">Cancel</button>
+              <button type="submit" class="edit-btn" [disabled]="saving()">
+                {{ saving() ? 'Saving…' : 'Save changes' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <p class="bio">
+            Member of <strong>{{ companyName() }}</strong>
+            @if (jobTitle) {
+              working as <strong>{{ jobTitle }}</strong>
+            } @else if (roleName) {
+              with the role <strong>{{ roleName }}</strong>
+            }.
+          </p>
+
+          <div class="about-grid">
+            <div>
+              <h4>Role</h4>
+              <p>{{ roleName || '—' }}</p>
+            </div>
+            <div>
+              <h4>Job title</h4>
+              <p>{{ jobTitle || 'Assigned by your manager' }}</p>
+            </div>
+            <div>
+              <h4>Active workspace</h4>
+              <p>{{ companyName() }}</p>
+            </div>
+            <div>
+              <h4>Joined</h4>
+              <p>
+                @if (createdAt) {
+                  {{ createdAt | date: 'MMMM y' }}
+                } @else {
+                  —
+                }
+              </p>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <h3>Workspaces</h3>
+            @if (companies().length) {
+              <ul class="membership-list">
+                @for (c of companies(); track c.id) {
+                  <li [class.current]="isActiveCompany(c)">
+                    <div class="membership-head">
+                      <strong>{{ c.name }}</strong>
+                      @if (isActiveCompany(c)) {
+                        <span class="pill">Current</span>
+                      }
+                    </div>
+                    <p class="membership-meta">
+                      {{ c.roleName || 'Member' }}
+                      @if (c.jobTitle) {
+                        <span>· {{ c.jobTitle }}</span>
+                      }
+                    </p>
+                    @if (c.teams?.length) {
+                      <div class="chip-row">
+                        @for (t of c.teams; track t.id) {
+                          <span class="chip soft">{{ t.name }}</span>
+                        }
+                      </div>
+                    } @else {
+                      <p class="muted-line">No teams in this workspace</p>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="muted-line">You’re not in a company workspace yet.</p>
+            }
+          </div>
+
+          <div class="detail-block">
+            <h3>Teams in {{ companyName() }}</h3>
+            @if (teams().length) {
+              <div class="chip-row">
+                @for (t of teams(); track t.id) {
+                  <span class="chip">{{ t.name }}</span>
+                }
+              </div>
+            } @else {
+              <p class="muted-line">No teams assigned in the active workspace.</p>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (tab() === 'posts') {
+      <section class="content-card posts-empty">
+        <h3>Your posts</h3>
+        <p>Posts you share in the company feed will show up here.</p>
+        <a routerLink="/feed" class="edit-btn link-btn">Go to feed</a>
+      </section>
+    }
+  }
+</section>

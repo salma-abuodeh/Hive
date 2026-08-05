@@ -32,4 +32,9 @@ public class CreateUserRequest {
     private String roleName;
 
     private List<Long> companyIds;
+
+    @Size(max = 150)
+    private String jobTitle;
+
+    private List<Long> teamIds;
 }

@@ -1,0 +1,94 @@
+<article class="post-card rise-in" [class.is-editing]="editing()">
+  <header class="post-head">
+    <div class="author">
+      <span class="hex avatar">{{ post().authorFirstName[0] }}{{ post().authorLastName[0] }}</span>
+      <div>
+        <div class="name-row">
+          <strong>{{ post().authorFirstName }} {{ post().authorLastName }}</strong>
+          @if (post().authorRoleName) {
+            <span class="role">{{ post().authorRoleName }}</span>
+          }
+        </div>
+        <p class="meta">
+          @if (post().authorJobTitle) {
+            <span>{{ post().authorJobTitle }} · </span>
+          }
+          <time>{{ post().createdAt | date: 'MMM d, y · h:mm a' }}</time>
+          @if (!editing()) {
+            <span> · {{ post().visibilityType === 'TEAM' ? (post().teamName || 'Team') : 'Everyone at company' }}</span>
+          }
+        </p>
+      </div>
+    </div>
+
+    @if (post().ownedByMe && !editing()) {
+      <div class="owner-actions">
+        <button type="button" class="text-btn" (click)="startEdit()">Edit</button>
+        <button type="button" class="text-btn danger" (click)="remove.emit(post())">Delete</button>
+      </div>
+    }
+  </header>
+
+  @if (editing()) {
+    <form class="inline-edit" (ngSubmit)="submitEdit()">
+      <textarea [(ngModel)]="editContent" name="editContent" rows="3" maxlength="10000"></textarea>
+
+      <div class="edit-row">
+        <select [(ngModel)]="editVisibility" name="editVisibility">
+          <option value="COMPANY">Everyone at {{ companyName() }}</option>
+          @if (teams().length) {
+            <option value="TEAM">Team only</option>
+          }
+        </select>
+
+        @if (editVisibility === 'TEAM') {
+          <select [(ngModel)]="editTeamId" name="editTeamId">
+            @for (t of teams(); track t.id) {
+              <option [ngValue]="t.id">{{ t.name }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <div class="edit-btns">
+        <button type="button" class="ghost-btn" (click)="cancelEdit.emit()" [disabled]="saving()">Cancel</button>
+        <button type="submit" class="save-btn" [disabled]="saving() || !editContent.trim()">
+          {{ saving() ? 'Saving…' : 'Save changes' }}
+        </button>
+      </div>
+    </form>
+  } @else {
+    <p class="body">{{ post().content }}</p>
+
+    <footer class="actions">
+      <div class="reactions">
+        @for (r of reactions; track r.type) {
+          <button
+            type="button"
+            class="react-btn"
+            [class.on]="post().myReaction === r.type"
+            (click)="react.emit({ post: post(), type: r.type })"
+            [title]="r.type"
+          >
+            {{ r.emoji }}
+          </button>
+        }
+        <span class="count">{{ post().likeCount }}</span>
+      </div>
+
+      <a class="action" [routerLink]="['/feed', post().id]">
+        <span class="icon">💬</span>
+        <span>{{ post().commentCount }}</span>
+      </a>
+
+      <button type="button" class="action" (click)="share.emit(post())">
+        <span class="icon">↗</span>
+        <span>Share</span>
+      </button>
+
+      <button type="button" class="action bookmark" [class.on]="post().savedByMe" (click)="saveToggle.emit(post())">
+        <span class="icon">{{ post().savedByMe ? '★' : '☆' }}</span>
+      </button>
+    </footer>
+  }
+</article>

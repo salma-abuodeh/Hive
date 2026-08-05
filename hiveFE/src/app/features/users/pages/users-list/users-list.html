@@ -1,113 +1,330 @@
-<div class="users-page">
-    <h2>{{ title() }}</h2>
-  
-    @if (error()) {
-      <p class="error">{{ error() }}</p>
-    }
-  
+<section class="users-page">
+  <div class="users-content rise-in">
+  <header class="users-header">
+    <div>
+      <p class="eyebrow">People</p>
+      <h1>{{ title() }}</h1>
+      <p>Invite teammates and assign roles, job titles, and teams for your company.</p>
+    </div>
     @if (auth.canManageUsers() && !error()) {
-      <section class="create-box">
-        <h3>Create user</h3>
-  
-        <div class="form-row">
-          <label>First name</label>
-          <input [(ngModel)]="firstName" />
-        </div>
-        <div class="form-row">
-          <label>Last name</label>
-          <input [(ngModel)]="lastName" />
-        </div>
-        <div class="form-row">
-          <label>Email</label>
-          <input [(ngModel)]="email" type="email" />
-        </div>
-        <div class="form-row">
-          <label>Password</label>
-          <input [(ngModel)]="password" type="password" />
-        </div>
-        <div class="form-row">
-          <label>Role</label>
-          <select [(ngModel)]="roleName">
-            <option value="Employee">Employee</option>
-            <option value="Manager">Manager</option>
-          </select>
-        </div>
-  
-        @if (auth.isPlatformAdmin()) {
-          <div class="form-row">
-            <label>Company id (optional)</label>
-            <input type="number" [(ngModel)]="companyId" />
-          </div>
-        }
-  
-        @if (formError()) {
-          <p class="error">{{ formError() }}</p>
-        }
-        @if (formSuccess()) {
-          <p class="success">{{ formSuccess() }}</p>
-        }
-  
-        <button [disabled]="saving()" (click)="create()">
-          @if (saving()) {
-            Creating...
-          } @else {
-            Create user
-          }
-        </button>
-      </section>
+      <div class="header-actions">
+        <button type="button" class="primary-btn" (click)="openCreate()">Create user</button>
+      </div>
     }
-  
-    @if (loading()) {
-      <p>Loading...</p>
-    } @else if (!error()) {
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Active</th>
-          </tr>
-        </thead>
-        <tbody>
-            @for (u of users(); track u.id) {
-                <tr>
-                  @if (editingId === u.id) {
-                    <td colspan="4">
-                      <div class="edit-row">
-                        <input [(ngModel)]="editFirstName" placeholder="First" />
-                        <input [(ngModel)]="editLastName" placeholder="Last" />
-                        <input [(ngModel)]="editEmail" placeholder="Email" />
-                    <select [(ngModel)]="editRoleName">
-                      <option value="Employee">Employee</option>
-                      <option value="Manager">Manager</option>
-                    </select>
-                        <label><input type="checkbox" [(ngModel)]="editActive" /> Active</label>
-                        <input type="password" [(ngModel)]="editPassword" placeholder="New password (optional)" />
-                        <button [disabled]="saving()" (click)="saveEdit()">Save</button>
-                        <button type="button" (click)="cancelEdit()">Cancel</button>
-                      </div>
-                    </td>
-                  } @else {
-                    <td>{{ u.firstName }} {{ u.lastName }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.roleName }}</td>
-                    <td>
-                      {{ u.active ? 'Yes' : 'No' }}
-                      <button type="button" (click)="startEdit(u)">Edit</button>
-                      <button type="button" (click)="toggleActive(u)">
-                        {{ u.active ? 'Deactivate' : 'Activate' }}
-                      </button>
-                      <button type="button" (click)="remove(u)">Delete</button>
-                    </td>
-                  }
-                </tr>
-              } @empty {
+  </header>
+
+  @if (toast()) {
+    <div class="toast" role="status">{{ toast() }}</div>
+  }
+
+  @if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+
+  @if (formError() && !showCreate() && !showEdit()) {
+    <p class="notice error" role="alert">{{ formError() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="loading-label">Loading users…</p>
+  } @else if (!error()) {
+    <section class="shell">
+      <div class="shell-bar">
+        <h2>Directory</h2>
+        <span class="count-chip">{{ users().length }}</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="users-table">
+          <thead>
             <tr>
-              <td colspan="4">No users found</td>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Job title</th>
+              @if (canAssignTeams()) {
+                <th>Team</th>
+              }
+              <th>Active</th>
+              <th></th>
             </tr>
-          }
-        </tbody>
-      </table>
-    }
+          </thead>
+          <tbody>
+            @for (u of users(); track u.id) {
+              <tr [class.row-active]="editingId === u.id">
+                <td>
+                  <div class="person">
+                    <span class="hex avatar">{{ initials(u) }}</span>
+                    <strong>{{ u.firstName }} {{ u.lastName }}</strong>
+                  </div>
+                </td>
+                <td class="email-cell">{{ u.email }}</td>
+                <td>
+                  @if (u.roleName) {
+                    <span class="badge">{{ u.roleName }}</span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td>{{ u.jobTitle || '—' }}</td>
+                @if (canAssignTeams()) {
+                  <td>
+                    @if (u.teams?.length) {
+                      <div class="team-tags">
+                        @for (t of u.teams; track t.id) {
+                          <span class="badge soft">{{ t.name }}</span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="muted">—</span>
+                    }
+                  </td>
+                }
+                <td>
+                  <span class="status" [class.on]="u.active">{{ u.active ? 'Yes' : 'No' }}</span>
+                </td>
+                <td class="actions">
+                  <button type="button" class="ghost-btn" (click)="startEdit(u)">Edit</button>
+                  <button type="button" class="ghost-btn" (click)="toggleActive(u)">
+                    {{ u.active ? 'Deactivate' : 'Activate' }}
+                  </button>
+                  <button type="button" class="ghost-btn danger" (click)="remove(u)">Delete</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="canAssignTeams() ? 7 : 6" class="empty-cell">
+                  <div class="empty">
+                    <h3>No users yet</h3>
+                    <p>Create a user to invite someone into your company.</p>
+                    <button type="button" class="primary-btn" (click)="openCreate()">Create user</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
   </div>
+
+  @if (showCreate()) {
+    <div class="modal-backdrop" (click)="closeCreate()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <button type="button" class="close" (click)="closeCreate()" aria-label="Close">×</button>
+        <div class="modal-head">
+          <p class="eyebrow">Invite</p>
+          <h2>Create user</h2>
+          <p class="modal-lead">Add someone to your company with a role, job title, and teams.</p>
+        </div>
+
+        <form class="create-form modal-form" (ngSubmit)="create()">
+          <div class="modal-body">
+            <div class="field-row">
+              <label class="field">
+                <span>First name</span>
+                <input [(ngModel)]="firstName" name="firstName" required />
+              </label>
+              <label class="field">
+                <span>Last name</span>
+                <input [(ngModel)]="lastName" name="lastName" required />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Email</span>
+              <input [(ngModel)]="email" name="email" type="email" required />
+            </label>
+
+            <label class="field">
+              <span>Password</span>
+              <input [(ngModel)]="password" name="password" type="password" required />
+            </label>
+
+            <div class="field-row">
+              <label class="field">
+                <span>Role</span>
+                <select [(ngModel)]="roleName" name="roleName">
+                  <option value="Employee">Employee</option>
+                  <option value="Manager">Manager</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Job title</span>
+                <input
+                  [(ngModel)]="jobTitle"
+                  name="jobTitle"
+                  placeholder="e.g. Software Engineer"
+                  maxlength="150"
+                />
+              </label>
+            </div>
+
+            @if (canAssignTeams()) {
+              <div class="team-picker">
+                <span class="picker-label">Teams</span>
+                @if (teams().length === 0) {
+                  <p class="hint">
+                    No teams yet.
+                    <a routerLink="/company" (click)="closeCreate()">Create teams in Company</a>
+                  </p>
+                } @else {
+                  <div class="team-checks">
+                    @for (t of teams(); track t.id) {
+                      <label class="team-chip" [class.on]="isTeamSelected(t.id)">
+                        <input
+                          type="checkbox"
+                          [checked]="isTeamSelected(t.id)"
+                          (change)="toggleTeam(t.id, $any($event.target).checked)"
+                        />
+                        {{ t.name }}
+                      </label>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            @if (auth.isPlatformAdmin()) {
+              <label class="field">
+                <span>Company id <em>(optional)</em></span>
+                <input type="number" [(ngModel)]="companyId" name="companyId" />
+              </label>
+            }
+
+            @if (formError()) {
+              <p class="notice error">{{ formError() }}</p>
+            }
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="ghost-btn" (click)="closeCreate()">Cancel</button>
+            <button type="submit" class="primary-btn" [disabled]="saving()">
+              {{ saving() ? 'Creating…' : 'Create user' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (showEdit() && editingUser(); as u) {
+    <div class="modal-backdrop" (click)="closeEdit()">
+      <div class="modal modal-edit" (click)="$event.stopPropagation()">
+        <button type="button" class="close" (click)="closeEdit()" aria-label="Close">×</button>
+        <div class="modal-head">
+          <p class="eyebrow">Directory</p>
+          <h2>Edit member</h2>
+        </div>
+
+        <form class="create-form modal-form" (ngSubmit)="saveEdit()">
+          <div class="modal-body">
+            <div class="edit-identity">
+              <span class="hex avatar lg">{{ initials(u) }}</span>
+              <div>
+                <strong>{{ editFirstName }} {{ editLastName }}</strong>
+                <p>{{ editEmail }}</p>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <label class="field">
+                <span>First name</span>
+                <input [(ngModel)]="editFirstName" name="editFirstName" required />
+              </label>
+              <label class="field">
+                <span>Last name</span>
+                <input [(ngModel)]="editLastName" name="editLastName" required />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Email</span>
+              <input [(ngModel)]="editEmail" name="editEmail" type="email" required />
+            </label>
+
+            <div class="field-row">
+              <label class="field">
+                <span>Role</span>
+                <select [(ngModel)]="editRoleName" name="editRoleName">
+                  <option value="Employee">Employee</option>
+                  <option value="Manager">Manager</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Job title</span>
+                <input
+                  [(ngModel)]="editJobTitle"
+                  name="editJobTitle"
+                  placeholder="e.g. Software Engineer"
+                  maxlength="150"
+                />
+              </label>
+            </div>
+
+            @if (canAssignTeams()) {
+              <div class="team-picker">
+                <span class="picker-label">Teams</span>
+                @if (teams().length === 0) {
+                  <p class="hint">
+                    No teams yet.
+                    <a routerLink="/company" (click)="closeEdit()">Create teams in Company</a>
+                  </p>
+                } @else {
+                  <div class="team-checks">
+                    @for (t of teams(); track t.id) {
+                      <label class="team-chip" [class.on]="isEditTeamSelected(t.id)">
+                        <input
+                          type="checkbox"
+                          [checked]="isEditTeamSelected(t.id)"
+                          (change)="toggleEditTeam(t.id, $any($event.target).checked)"
+                        />
+                        {{ t.name }}
+                      </label>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="edit-meta">
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="editActive" name="editActive" />
+                <span class="switch-ui" aria-hidden="true"></span>
+                <span class="switch-text">
+                  <strong>{{ editActive ? 'Active' : 'Inactive' }}</strong>
+                  <em>{{ editActive ? 'Can sign in and access this workspace' : 'Blocked from this workspace' }}</em>
+                </span>
+              </label>
+
+              <label class="field password-field">
+                <span>New password <em>(optional)</em></span>
+                <input
+                  type="password"
+                  [(ngModel)]="editPassword"
+                  name="editPassword"
+                  placeholder="Leave blank to keep current"
+                  autocomplete="new-password"
+                />
+              </label>
+            </div>
+
+            @if (formError()) {
+              <p class="notice error">{{ formError() }}</p>
+            }
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="ghost-btn" (click)="closeEdit()">Cancel</button>
+            <button type="submit" class="primary-btn" [disabled]="saving()">
+              {{ saving() ? 'Saving…' : 'Save changes' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</section>

@@ -8,7 +8,9 @@ import org.example.hive.exception.AuthException;
 import org.example.hive.model.RoleNames;
 import org.example.hive.model.User;
 import org.example.hive.model.UserCompany;
+import org.example.hive.repository.UserCompanyRepository;
 import org.example.hive.repository.UserRepository;
+import org.example.hive.security.AuthUserPrincipal;
 import org.example.hive.security.CustomUserDetailsService;
 import org.example.hive.security.JwtService;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,7 @@ import java.util.List;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserCompanyRepository userCompanyRepository;
     private final UserCompanyService userCompanyService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -33,12 +36,14 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthService(UserRepository userRepository,
+                       UserCompanyRepository userCompanyRepository,
                        UserCompanyService userCompanyService,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
                        CustomUserDetailsService customUserDetailsService,
                        AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
+        this.userCompanyRepository = userCompanyRepository;
         this.userCompanyService = userCompanyService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -55,7 +60,18 @@ public class AuthService {
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new AuthException("User not found", HttpStatus.UNAUTHORIZED));
 
-        return buildLoginResponse(user);
+        return buildLoginResponse(user, null);
+    }
+
+    @Transactional(readOnly = true)
+    public LoginResponseDto switchCompany(AuthUserPrincipal principal, Long companyId) {
+        User user = userRepository.findById(principal.getUserId())
+                .orElseThrow(() -> new AuthException("User not found", HttpStatus.UNAUTHORIZED));
+
+        userCompanyRepository.findByUser_IdAndCompany_IdAndActiveTrue(user.getId(), companyId)
+                .orElseThrow(() -> new AuthException("You are not a member of that company", HttpStatus.FORBIDDEN));
+
+        return buildLoginResponse(user, companyId);
     }
 
     @Transactional
@@ -88,12 +104,16 @@ public class AuthService {
         );
     }
 
-    LoginResponseDto buildLoginResponse(User user) {
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
+    LoginResponseDto buildLoginResponse(User user, Long companyId) {
+        UserDetails userDetails = customUserDetailsService.loadUser(user.getEmail(), companyId);
         String token = jwtService.generateToken(userDetails);
 
+        Long activeCompanyId = userDetails instanceof AuthUserPrincipal principal
+                ? principal.getCompanyId()
+                : null;
+
         var memberships = userCompanyService.listActiveForUser(user.getId());
-        String role = resolveDisplayRole(user, memberships);
+        String role = resolveDisplayRole(user, memberships, activeCompanyId);
 
         return new LoginResponseDto(
                 token,
@@ -103,6 +123,7 @@ public class AuthService {
                 user.getEmail(),
                 role,
                 user.getActive(),
+                activeCompanyId,
                 userCompanyService.listCompanySummaries(user.getId()),
                 permissionNames(userDetails)
         );
@@ -115,9 +136,16 @@ public class AuthService {
                 .toList();
     }
 
-    private String resolveDisplayRole(User user, List<UserCompany> memberships) {
+    private String resolveDisplayRole(User user, List<UserCompany> memberships, Long activeCompanyId) {
         if (user.getPlatformRole() != null) {
             return user.getPlatformRole().getName();
+        }
+        if (activeCompanyId != null) {
+            return memberships.stream()
+                    .filter(m -> m.getCompany().getId().equals(activeCompanyId))
+                    .map(m -> m.getRole() != null ? m.getRole().getName() : RoleNames.EMPLOYEE)
+                    .findFirst()
+                    .orElse(RoleNames.EMPLOYEE);
         }
         if (!memberships.isEmpty() && memberships.get(0).getRole() != null) {
             return memberships.get(0).getRole().getName();

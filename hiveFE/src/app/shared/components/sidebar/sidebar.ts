@@ -1,12 +1,14 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { CompanySummary } from '../../../features/auth/models/auth.models';
 import { NavMenuItem } from '../../models/nav-menu-item';
+import { Icon } from '../icon/icon';
 import { MenuItem } from '../menu-item/menu-item';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, MenuItem],
+  imports: [RouterLink, MenuItem, Icon],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
@@ -15,8 +17,9 @@ export class Sidebar {
   private readonly router = inject(Router);
 
   readonly orgMenuOpen = signal(false);
+  readonly switching = signal(false);
 
-private readonly workspaceItems: NavMenuItem[] = [
+private readonly worksprivate readonly workspaceItems: NavMenuItem[] = [
   { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
   { name: 'Feed', url: '/feed', icon: 'feed' },
   { name: 'Events', url: '/events', icon: 'events' },
@@ -27,17 +30,33 @@ private readonly workspaceItems: NavMenuItem[] = [
   { name: 'Company', url: '/company', icon: 'company', requiresManageTeams: true },
 ];
 readonly accountItems: NavMenuItem[] = [    { name: 'My Profile', url: '/profile', icon: 'profile' },
+  private readonly workspaceItems: NavMenuItem[] = [
+    { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
+    { name: 'Feed', url: '/feed', icon: 'feed' },
+    { name: 'Saved', url: '/saved', icon: 'saved' },
+    { name: 'Notifications', url: '/notifications', icon: 'notifications' },
+    { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },
+    { name: 'Company', url: '/company', icon: 'company', requiresManageTeams: true },
+  ];
+
+  readonly accountItems: NavMenuItem[] = [
+    { name: 'My Profile', url: '/profile', icon: 'profile' },
   ];
 
   readonly visibleWorkspaceItems = computed(() =>
     this.workspaceItems.filter(
-      (item) => !item.requiresManageUsers || this.auth.canManageUsers()
+      (item) =>
+        (!item.requiresManageUsers || this.auth.canManageUsers()) &&
+        (!item.requiresManageTeams || this.auth.canManageTeams())
     )
   );
 
+  companies(): CompanySummary[] {
+    return this.auth.getCompanies();
+  }
+
   companyName(): string {
-    const companies = this.auth.getUser()?.companies;
-    return companies?.length ? companies[0].name : 'Your workspace';
+    return this.auth.getActiveCompany()?.name ?? 'Your workspace';
   }
 
   companyInitials(): string {
@@ -45,6 +64,26 @@ readonly accountItems: NavMenuItem[] = [    { name: 'My Profile', url: '/profile
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
+
+  isActiveCompany(company: CompanySummary): boolean {
+    return company.id === this.auth.getActiveCompanyId();
+  }
+
+  switchWorkspace(company: CompanySummary, event: Event): void {
+    event.stopPropagation();
+    if (this.isActiveCompany(company) || this.switching()) {
+      this.orgMenuOpen.set(false);
+      return;
+    }
+    this.switching.set(true);
+    this.auth.switchCompany(company.id).subscribe({
+      next: () => {
+        this.orgMenuOpen.set(false);
+        window.location.reload();
+      },
+      error: () => this.switching.set(false),
+    });
   }
 
   closeOrgMenuAndNavigate(): void {

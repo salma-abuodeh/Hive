@@ -1,0 +1,93 @@
+<section class="feed">
+  <header class="feed-header rise-in">
+    <div>
+      <h1>Home feed</h1>
+      <p>What's happening across {{ companyName() }}.</p>
+    </div>
+  </header>
+
+  @if (toast()) {
+    <div class="toast" role="status">{{ toast() }}</div>
+  }
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+
+  <form class="composer rise-in" (ngSubmit)="publish()">
+    <div class="composer-row">
+      <span class="hex avatar">{{ initials() }}</span>
+      <textarea
+        [(ngModel)]="content"
+        name="content"
+        rows="3"
+        maxlength="10000"
+        placeholder="Share something with your team..."
+      ></textarea>
+    </div>
+
+    <div class="composer-actions">
+      <div class="visibility-group">
+        <label class="visibility">
+          <span class="sr-only">Visibility</span>
+          <select [(ngModel)]="visibilityType" name="visibilityType" (ngModelChange)="onVisibilityChange()">
+            <option value="COMPANY">Everyone at {{ companyName() }}</option>
+            @if (myTeams().length) {
+              <option value="TEAM">Team only</option>
+            }
+          </select>
+        </label>
+
+        @if (visibilityType === 'TEAM') {
+          <label class="visibility">
+            <span class="sr-only">Team</span>
+            <select [(ngModel)]="teamId" name="teamId">
+              @for (t of myTeams(); track t.id) {
+                <option [ngValue]="t.id">{{ t.name }}</option>
+              }
+            </select>
+          </label>
+        }
+      </div>
+
+      <div class="composer-buttons">
+        <button type="submit" class="publish-btn" [disabled]="!content.trim() || busy()">
+          {{ busy() ? 'Publishing…' : 'Publish' }}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="post-list">
+    @for (post of posts(); track post.id) {
+      <app-post-card
+        [post]="post"
+        [editing]="editingId === post.id"
+        [saving]="busy() && editingId === post.id"
+        [teams]="myTeams()"
+        [companyName]="companyName()"
+        (edit)="onEdit($event)"
+        (cancelEdit)="cancelEdit()"
+        (saveEdit)="onSaveEdit($event)"
+        (remove)="onDelete($event)"
+        (react)="onReact($event)"
+        (saveToggle)="onSaveToggle($event)"
+        (share)="onShare($event)"
+      />
+    } @empty {
+      @if (!loading()) {
+        <div class="empty">
+          <h2>No posts yet</h2>
+          <p>Be the first to share something with your team.</p>
+        </div>
+      }
+    }
+  </div>
+
+  @if (!lastPage) {
+    <button type="button" class="load-more" (click)="loadFeed()" [disabled]="loading()">
+      {{ loading() ? 'Loading…' : 'Load more' }}
+    </button>
+  } @else if (loading() && posts().length === 0) {
+    <p class="loading-label">Loading feed…</p>
+  }
+</section>
