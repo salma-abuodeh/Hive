@@ -25,6 +25,7 @@ export class Sidebar {
     { name: 'Events', url: '/events', icon: 'events' },
     { name: 'Saved', url: '/saved', icon: 'saved' },
     { name: 'Notifications', url: '/notifications', icon: 'notifications' },
+    { name: 'Management', url: '/management', icon: 'people', requiresManagement: true },
     { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },
     { name: 'Company', url: '/company', icon: 'company', requiresManageTeams: true },
   ];
@@ -36,8 +37,10 @@ export class Sidebar {
   readonly visibleWorkspaceItems = computed(() =>
     this.workspaceItems.filter(
       (item) =>
+        (this.auth.getActiveCompanyId() != null || item.url === '/dashboard' || item.requiresManagement) &&
         (!item.requiresManageUsers || this.auth.canManageUsers()) &&
-        (!item.requiresManageTeams || this.auth.canManageTeams())
+        (!item.requiresManageTeams || this.auth.canManageTeams()) &&
+        (!item.requiresManagement || this.auth.isPlatformAdmin() || this.auth.isManager())
     )
   );
 

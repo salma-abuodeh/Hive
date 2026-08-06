@@ -53,6 +53,77 @@
       </div>
       <span class="honeycomb">✦</span>
     </article>
+
+    @if (false) {
+      <article class="panel company-panel">
+        <div>
+          <p class="eyebrow">COMPANY APPLICATIONS</p>
+          <h2>Awaiting review</h2>
+          @for (application of companyApplications(); track application.id) {
+            <p><strong>{{ application.companyName }}</strong> · {{ application.requesterEmail }}</p>
+          }
+        </div>
+      </article>
+    }
+
+    @if (!isPlatformAdmin && companyApplications().length) {
+      <article class="panel company-panel">
+        <div>
+          <p class="eyebrow">YOUR COMPANY APPLICATIONS</p>
+          @for (application of companyApplications(); track application.id) {
+            <p><strong>{{ application.companyName }}</strong> · {{ application.status }}</p>
+            @if (application.rejectionReason) { <p>{{ application.rejectionReason }}</p> }
+          }
+        </div>
+      </article>
+    }
+
+    @if (false) {
+      <article class="panel company-panel">
+        <div>
+          <p class="eyebrow">JOIN REQUESTS</p>
+          <h2>People waiting to join</h2>
+          @for (request of membershipRequests(); track request.id) {
+            <p><strong>{{ request.requesterName }}</strong> · {{ request.requesterEmail }}</p>
+          }
+        </div>
+      </article>
+    }
+
+    @if (!isPlatformAdmin && !isManager && joinableCompanies().length) {
+      <article class="panel company-panel join-company-panel">
+        <div>
+          <p class="eyebrow">JOIN A COMPANY</p>
+          <h2>Find your workspace</h2>
+          <p>Search by company name or website, then ask a manager to let you in.</p>
+          <label class="company-search">
+            <span class="sr-only">Search companies</span>
+            <input [ngModel]="companySearch()" (ngModelChange)="companySearch.set($event)" placeholder="Search companies or domains">
+          </label>
+          <div class="company-results">
+          @for (company of filteredCompanies(); track company.id) {
+            <div class="company-result">
+              <div><strong>{{ company.name }}</strong><small>{{ company.domain || 'Hive workspace' }}</small></div>
+              <button class="gold-button" (click)="requestToJoin(company.id)">Ask to join</button>
+            </div>
+          } @empty {
+            <p class="empty-result">No companies match your search.</p>
+          }
+          </div>
+        </div>
+      </article>
+    }
+
+    @if (!isPlatformAdmin && !isManager && membershipRequests().length) {
+      <article class="panel company-panel">
+        <div>
+          <p class="eyebrow">YOUR JOIN REQUESTS</p>
+          @for (request of membershipRequests(); track request.id) {
+            <p>{{ request.companyName }} · {{ request.status }}</p>
+          }
+        </div>
+      </article>
+    }
   </div>
 
   @if (showCompanyForm()) {

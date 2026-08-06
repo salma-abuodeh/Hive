@@ -1,0 +1,21 @@
+<section class="management-page">
+  <header class="page-header">
+    <p class="eyebrow">MANAGEMENT</p>
+    <h1>{{ isPlatformAdmin ? 'Platform reviews' : 'People management' }}</h1>
+    <p>{{ isPlatformAdmin ? 'Review company applications and decide which workspaces can join Hive.' : 'Review people who have asked to join your workspace.' }}</p>
+  </header>
+  @if (message()) { <p class="notice">{{ message() }}</p> }
+  <section class="review-panel">
+    @if (isPlatformAdmin) {
+      <div class="panel-heading"><div><p class="eyebrow">COMPANY APPLICATIONS</p><h2>Awaiting review</h2></div><span class="count">{{ companyApplications().length }}</span></div>
+      @if (loading()) { <p class="empty-state">Loading applications…</p> }
+      @else if (!companyApplications().length) { <p class="empty-state">No company applications are waiting for review.</p> }
+      @else { <div class="request-list">@for (application of companyApplications(); track application.id) { <article class="request-row"><div class="request-details"><h3>{{ application.companyName }}</h3><p>{{ application.requesterName }} · {{ application.requesterEmail }}</p></div><div class="request-actions"><button class="secondary-button" (click)="rejectCompany(application.id)">Reject</button><button class="primary-button" (click)="approveCompany(application.id)">Approve</button></div></article> }</div> }
+    } @else if (isManager) {
+      <div class="panel-heading"><div><p class="eyebrow">JOIN REQUESTS</p><h2>People waiting to join</h2></div><span class="count">{{ membershipRequests().length }}</span></div>
+      @if (loading()) { <p class="empty-state">Loading join requests…</p> }
+      @else if (!membershipRequests().length) { <p class="empty-state">No people are waiting to join your workspace.</p> }
+      @else { <div class="request-list">@for (request of membershipRequests(); track request.id) { <article class="request-row"><div class="request-details"><h3>{{ request.requesterName }}</h3><p>{{ request.requesterEmail }}</p></div><div class="request-actions"><button class="secondary-button" (click)="rejectMember(request.id)">Reject</button><button class="role-button" (click)="approveMember(request.id, 'Employee')">Approve employee</button><button class="primary-button" (click)="approveMember(request.id, 'Manager')">Approve manager</button></div></article> }</div> }
+    }
+  </section>
+</section>
