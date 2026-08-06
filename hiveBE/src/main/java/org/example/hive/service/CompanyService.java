@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class CompanyService {
 
@@ -70,6 +72,16 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public CompanyResponse getById(Long companyId) {
         return CompanyMapper.toResponse(findCompany(companyId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompanyResponse> listJoinable(Long userId) {
+        return companyRepository.findByActiveTrue().stream()
+                .filter(c -> "active".equalsIgnoreCase(c.getStatus()))
+                .filter(c -> userCompanyService.listActiveForUser(userId).stream()
+                        .noneMatch(m -> m.getCompany().getId().equals(c.getId())))
+                .map(CompanyMapper::toResponse)
+                .toList();
     }
 
     @Transactional

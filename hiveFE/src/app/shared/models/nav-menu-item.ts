@@ -20,4 +20,5 @@ export interface NavMenuItem {
   icon: AppIcon;
   requiresManageUsers?: boolean;
   requiresManageTeams?: boolean;
+  requiresManagement?: boolean;
 }

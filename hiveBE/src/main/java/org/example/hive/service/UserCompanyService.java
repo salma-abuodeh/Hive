@@ -61,6 +61,17 @@ public class UserCompanyService {
     }
 
     @Transactional
+    public UserCompany addOrReactivate(User user, Company company, Role role) {
+        return userCompanyRepository.findByUser_IdAndCompany_Id(user.getId(), company.getId())
+                .map(existing -> {
+                    existing.setRole(role);
+                    existing.setActive(true);
+                    return userCompanyRepository.save(existing);
+                })
+                .orElseGet(() -> add(user, company.getId(), role));
+    }
+
+    @Transactional
     public UserCompany save(UserCompany membership) {
         return userCompanyRepository.save(membership);
     }

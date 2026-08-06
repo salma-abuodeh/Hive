@@ -25,8 +25,8 @@ export interface CompanyResponse {
 export class CompanyService {
   private readonly http = inject(HttpClient);
 
-  apply(payload: CompanyApplicationRequest): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/company-applications`, payload);
+  apply(payload: CompanyApplicationRequest): Observable<{ id: number; status: string }> {
+    return this.http.post<{ id: number; status: string }>(`${environment.apiUrl}/company-applications`, payload);
   }
 
   create(payload: CompanyApplicationRequest): Observable<CompanyResponse> {
