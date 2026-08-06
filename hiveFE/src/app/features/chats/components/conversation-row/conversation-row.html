@@ -1,0 +1,19 @@
+<button
+  type="button"
+  class="conversation-row"
+  [class.active]="active()"
+  [attr.aria-current]="active() ? 'true' : null"
+  (click)="selected.emit(conversation())"
+>
+  <span class="conversation-avatar hex">{{ conversation().initials }}</span>
+  <span class="conversation-copy">
+    <span class="conversation-title">{{ conversation().name }}</span>
+    <span class="conversation-preview">{{ conversation().preview }}</span>
+  </span>
+  <span class="conversation-meta">
+    <span>{{ conversation().timestamp }}</span>
+    @if (conversation().unreadCount) {
+      <span class="unread-count">{{ conversation().unreadCount }}</span>
+    }
+  </span>
+</button>

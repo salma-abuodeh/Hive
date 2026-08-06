@@ -22,6 +22,7 @@ export class Sidebar {
   private readonly workspaceItems: NavMenuItem[] = [
     { name: 'Dashboard', url: '/dashboard', icon: 'dashboard' },
     { name: 'Feed', url: '/feed', icon: 'feed' },
+    { name: 'Chats', url: '/chats', icon: 'chat' },
     { name: 'Events', url: '/events', icon: 'events' },
     { name: 'Saved', url: '/saved', icon: 'saved' },
     { name: 'Notifications', url: '/notifications', icon: 'notifications' },
