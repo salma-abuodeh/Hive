@@ -35,12 +35,12 @@ CREATE TABLE roles (
 -- ==================== PERMISSIONS ====================
 
 CREATE TABLE permissions (
-    id              BIGSERIAL PRIMARY KEY,
-    name            VARCHAR(100) NOT NULL UNIQUE,
-    description     VARCHAR(500),
-    active          BOOLEAN      NOT NULL DEFAULT true,
-    created_at      TIMESTAMP    NOT NULL DEFAULT now(),
-    updated_at      TIMESTAMP    NOT NULL DEFAULT now()
+                             id              BIGSERIAL PRIMARY KEY,
+                             name            VARCHAR(100) NOT NULL UNIQUE,
+                             description     VARCHAR(500),
+                             active          BOOLEAN      NOT NULL DEFAULT true,
+                             created_at      TIMESTAMP    NOT NULL DEFAULT now(),
+                             updated_at      TIMESTAMP    NOT NULL DEFAULT now()
 );
 
 CREATE TABLE role_permissions (
@@ -225,6 +225,39 @@ CREATE TABLE event_rsvps (
                              UNIQUE (event_id, user_id)
 );
 
+-- ==================== POLLS ====================
+
+CREATE TABLE polls (
+                       id                  BIGSERIAL PRIMARY KEY,
+                       company_id          BIGINT       NOT NULL REFERENCES companies(id),
+                       team_id             BIGINT       REFERENCES teams(id),
+                       created_by_user_id  BIGINT       NOT NULL REFERENCES users(id),
+                       question            VARCHAR(255) NOT NULL,
+                       description         TEXT,
+                       allow_multiple      BOOLEAN      NOT NULL DEFAULT false,
+                       closes_at           TIMESTAMP,
+                       visibility_type     VARCHAR(50)  NOT NULL DEFAULT 'company',
+                       active              BOOLEAN      NOT NULL DEFAULT true,
+                       created_at          TIMESTAMP    NOT NULL DEFAULT now(),
+                       updated_at          TIMESTAMP    NOT NULL DEFAULT now()
+);
+
+CREATE TABLE poll_options (
+                              id              BIGSERIAL PRIMARY KEY,
+                              poll_id         BIGINT       NOT NULL REFERENCES polls(id),
+                              option_text     VARCHAR(255) NOT NULL,
+                              display_order   INT          NOT NULL DEFAULT 0
+);
+
+CREATE TABLE poll_votes (
+                            id          BIGSERIAL PRIMARY KEY,
+                            poll_id     BIGINT    NOT NULL REFERENCES polls(id),
+                            option_id   BIGINT    NOT NULL REFERENCES poll_options(id),
+                            user_id     BIGINT    NOT NULL REFERENCES users(id),
+                            voted_at    TIMESTAMP NOT NULL DEFAULT now(),
+                            UNIQUE (poll_id, option_id, user_id)
+);
+
 -- ==================== TENANT-SCOPING INDEXES ====================
 
 CREATE INDEX idx_teams_company ON teams(company_id);
@@ -244,3 +277,8 @@ CREATE INDEX idx_logs_company ON logs(company_id);
 CREATE INDEX idx_conversations_company ON conversations(company_id);
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX idx_events_company ON events(company_id);
+CREATE INDEX idx_polls_company ON polls(company_id);
+CREATE INDEX idx_polls_team ON polls(team_id);
+CREATE INDEX idx_poll_options_poll ON poll_options(poll_id);
+CREATE INDEX idx_poll_votes_poll ON poll_votes(poll_id);
+CREATE INDEX idx_poll_votes_user ON poll_votes(user_id);

@@ -30,6 +30,11 @@ public final class Permissions {
     public static final String EVENT_UPDATE = of(PermissionResource.EVENT, PermissionAction.UPDATE);
     public static final String EVENT_DELETE = of(PermissionResource.EVENT, PermissionAction.DELETE);
     public static final String EVENT_INVITE = of(PermissionResource.EVENT, PermissionAction.INVITE);
+    //Poll
+    public static final String POLL_VIEW = of(PermissionResource.POLL, PermissionAction.VIEW);
+    public static final String POLL_CREATE = of(PermissionResource.POLL, PermissionAction.CREATE);
+    public static final String POLL_UPDATE = of(PermissionResource.POLL, PermissionAction.UPDATE);
+    public static final String POLL_DELETE = of(PermissionResource.POLL, PermissionAction.DELETE);
     /** Platform-only operations (e.g. manage users across all companies). */
     public static final String PLATFORM_MANAGE = "PLATFORM_MANAGE";
     public static String of(PermissionResource resource, PermissionAction action) {
