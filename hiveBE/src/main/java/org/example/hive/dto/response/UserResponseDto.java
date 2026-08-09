@@ -20,4 +20,5 @@ public class UserResponseDto {
     private List<CompanyMembershipDto> companies;
     private Boolean active;
     private LocalDateTime createdAt;
+    private String avatarUrl;
 }

@@ -63,4 +63,15 @@ public final class AppEnums {
         SAD,
         ANGRY
     }
+    public enum AttachmentContext {
+        AVATAR,
+        COMPANY_LOGO,
+        TEAM_LOGO,
+        EVENT_COVER,
+        POST,
+        COMMENT,
+        CHAT_MESSAGE,
+        COMPANY_APPLICATION_DOCUMENT,
+        MEMBERSHIP_REQUEST_DOCUMENT
+    }
 }

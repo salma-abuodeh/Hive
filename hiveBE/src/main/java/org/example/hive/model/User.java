@@ -36,8 +36,9 @@ public class User {
     @Column(name = "job_title")
     private String jobTitle;
 
-    @Column(name = "profile_image_url")
-    private String profileImageUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "avatar_attachment_id")
+    private Attachment avatar;
 
     @Column(nullable = false)
     private String status;

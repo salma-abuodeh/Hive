@@ -104,4 +104,10 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponseDto(409, "Could not save changes due to a data conflict", LocalDateTime.now()));
     }
+    @ExceptionHandler(AttachmentException.class)
+    public ResponseEntity<ErrorResponseDto> handleAttachmentException(AttachmentException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
 }

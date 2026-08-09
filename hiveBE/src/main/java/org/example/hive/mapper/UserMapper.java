@@ -13,6 +13,10 @@ public final class UserMapper {
     private UserMapper() {
     }
 
+    private static String avatarUrl(User user) {
+        return user.getAvatar() != null ? "/attachments/" + user.getAvatar().getId() : null;
+    }
+
     public static UserResponseDto toResponse(User user) {
         return toResponse(user, null, null, List.of(), null, List.of());
     }
@@ -37,7 +41,8 @@ public final class UserMapper {
                 companyId,
                 List.of(),
                 membership.getActive(),
-                membership.getUser().getCreatedAt()
+                membership.getUser().getCreatedAt(),
+                avatarUrl(membership.getUser())
         );
     }
 
@@ -62,7 +67,8 @@ public final class UserMapper {
                     activeCompanyId,
                     companies != null ? companies : List.of(),
                     activeMembership.getActive(),
-                    user.getCreatedAt()
+                    user.getCreatedAt(),
+                    avatarUrl(user)
             );
         }
 
@@ -78,7 +84,8 @@ public final class UserMapper {
                 activeCompanyId,
                 companies != null ? companies : List.of(),
                 user.getActive(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                avatarUrl(user)
         );
     }
 
@@ -111,7 +118,8 @@ public final class UserMapper {
                 activeCompanyId,
                 companies != null ? companies : List.of(),
                 user.getActive(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                avatarUrl(user)
         );
     }
 
