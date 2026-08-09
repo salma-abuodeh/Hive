@@ -1,0 +1,171 @@
+<div class="polls-shell">
+  <div class="polls-header">
+    <div>
+      <h1>Polls</h1>
+      <p class="subtitle">Weigh in on what your team decides next</p>
+    </div>
+    @if (auth.hasPermission('POLL_CREATE')) {
+      <button class="btn-primary" (click)="openCreateForm()">+ New poll</button>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="banner-error">{{ error() }}</div>
+  }
+
+  <div class="polls-body">
+    <div class="polls-list-pane">
+      @if (loading()) {
+        <p class="muted">Loading polls…</p>
+      } @else if (polls().length === 0) {
+        <p class="muted">No polls yet.</p>
+      } @else {
+        @for (poll of polls(); track poll.id) {
+          <button
+            class="poll-row"
+            [class.active]="selectedPoll()?.id === poll.id"
+            (click)="selectPoll(poll)">
+            <span class="poll-row-question">{{ poll.question }}</span>
+            <span class="poll-row-meta">
+              {{ poll.totalVotes }} votes
+              @if (isClosed(poll)) { · Closed }
+            </span>
+          </button>
+        }
+      }
+    </div>
+
+    <div class="poll-detail-pane">
+      @if (selectedPoll(); as poll) {
+        <div class="poll-detail-card">
+          <div class="poll-detail-head">
+            <h2>{{ poll.question }}</h2>
+            <div class="poll-detail-actions">
+              @if (canManage(poll)) {
+                <button class="btn-secondary" (click)="openEditForm(poll)">Edit</button>
+              }
+              @if (canDelete(poll)) {
+                <button class="btn-danger" (click)="remove(poll)">Delete</button>
+              }
+            </div>
+          </div>
+
+          @if (poll.description) {
+            <p class="poll-description">{{ poll.description }}</p>
+          }
+
+          <p class="poll-meta">
+            By {{ poll.createdByName }}
+            @if (poll.closesAt) {
+              · Closes {{ poll.closesAt | date:'medium' }}
+            }
+          </p>
+
+          <div class="poll-options">
+            @for (option of poll.options; track option.id) {
+              <label class="poll-option" [class.selected]="selectedOptionIds().has(option.id)">
+                <input
+                  [type]="poll.allowMultiple ? 'checkbox' : 'radio'"
+                  name="poll-option"
+                  [checked]="selectedOptionIds().has(option.id)"
+                  [disabled]="isClosed(poll) || voting()"
+                  (change)="toggleOption(option.id)" />
+                <span class="poll-option-text">{{ option.text }}</span>
+                <span class="poll-option-bar-track">
+                  <span
+                    class="poll-option-bar-fill"
+                    [style.width.%]="optionPercentage(option.voteCount, poll.totalVotes)"></span>
+                </span>
+                <span class="poll-option-count">{{ option.voteCount }}</span>
+              </label>
+            }
+          </div>
+
+          @if (!isClosed(poll)) {
+            <div class="poll-vote-actions">
+              <button
+                class="btn-primary"
+                [disabled]="voting() || selectedOptionIds().size === 0"
+                (click)="submitVote()">
+                {{ hasVoted(poll) ? 'Update vote' : 'Submit vote' }}
+              </button>
+              @if (hasVoted(poll)) {
+                <button class="btn-secondary" [disabled]="voting()" (click)="clearVote()">
+                  Remove my vote
+                </button>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="muted">Select a poll to see details.</p>
+      }
+    </div>
+  </div>
+</div>
+
+@if (showForm()) {
+  <div class="modal-overlay" (click)="closeForm()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h2>{{ editingId != null ? 'Edit poll' : 'New poll' }}</h2>
+
+      @if (formError()) {
+        <div class="banner-error">{{ formError() }}</div>
+      }
+
+      <label class="field-label">Question</label>
+      <input class="field-input" [(ngModel)]="question" placeholder="What should we ask?" />
+
+      <label class="field-label">Description (optional)</label>
+      <textarea class="field-input" [(ngModel)]="description"></textarea>
+
+      <label class="field-label">Options</label>
+      @for (opt of optionTexts; track $index) {
+        <div class="option-row">
+          <input class="field-input" [(ngModel)]="optionTexts[$index]" [placeholder]="'Option ' + ($index + 1)" />
+          @if (optionTexts.length > 2) {
+            <button class="btn-icon" (click)="removeOption($index)">✕</button>
+          }
+        </div>
+      }
+      @if (optionTexts.length < 10) {
+        <button class="btn-secondary" (click)="addOption()">+ Add option</button>
+      }
+
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="allowMultiple" />
+        Allow multiple selections
+      </label>
+
+      <label class="field-label">Closes at (optional)</label>
+      <div class="option-row">
+        <input class="field-input" type="date" [(ngModel)]="closesAtDate" />
+        <input class="field-input" type="time" [(ngModel)]="closesAtTime" />
+      </div>
+
+      <label class="field-label">Visibility</label>
+      <select class="field-input" [(ngModel)]="visibility" (ngModelChange)="onVisibilityChange()">
+        <option value="COMPANY">Company</option>
+        <option value="TEAM">Team</option>
+        <option value="PRIVATE">Private</option>
+      </select>
+
+      @if (visibility === 'TEAM') {
+        <label class="field-label">Team</label>
+        <select class="field-input" [(ngModel)]="teamId">
+          <option [ngValue]="null">Choose a team</option>
+          @for (team of myTeams(); track team.id) {
+            <option [ngValue]="team.id">{{ team.name }}</option>
+          }
+        </select>
+      }
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeForm()">Cancel</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="submit()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
