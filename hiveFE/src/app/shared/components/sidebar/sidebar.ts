@@ -28,6 +28,7 @@ export class Sidebar {
     { name: 'Management', url: '/management', icon: 'people', requiresManagement: true },
     { name: 'People', url: '/users', icon: 'people', requiresManageUsers: true },
     { name: 'Company', url: '/company', icon: 'company', requiresManageTeams: true },
+    { name: 'Polls', url: '/polls', icon: 'poll' },
   ];
 
   readonly accountItems: NavMenuItem[] = [

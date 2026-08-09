@@ -11,7 +11,8 @@ export type AppIcon =
   | 'search'
   | 'plus'
   | 'chevronDown'
-  | 'events';
+  | 'events'
+  | 'poll';
 export type NavIcon = AppIcon;
 
 export interface NavMenuItem {
