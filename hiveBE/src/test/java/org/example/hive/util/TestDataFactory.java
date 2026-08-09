@@ -75,7 +75,6 @@ public class TestDataFactory {
                 .email("john" + System.nanoTime() + "@mail.com")
                 .password("$2a$10$abcdefghijklmnopqrstuv")
                 .jobTitle("Software Engineer")
-                .profileImageUrl(null)
                 .build();
 
         return userRepository.save(user);
