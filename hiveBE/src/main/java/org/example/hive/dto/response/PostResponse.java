@@ -7,6 +7,7 @@ import org.example.hive.config.AppEnums.ReactionType;
 import org.example.hive.config.AppEnums.VisibilityType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -30,4 +31,5 @@ public class PostResponse {
     private boolean ownedByMe;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<AttachmentResponse> attachments;
 }

@@ -74,4 +74,9 @@ public final class AppEnums {
         COMPANY_APPLICATION_DOCUMENT,
         MEMBERSHIP_REQUEST_DOCUMENT
     }
+
+    public enum AttachmentType {
+        IMAGE,
+        DOCUMENT
+    }
 }

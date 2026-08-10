@@ -1,10 +1,15 @@
 package org.example.hive.mapper;
 
 import org.example.hive.config.AppEnums.ReactionType;
+import org.example.hive.dto.response.AttachmentResponse;
 import org.example.hive.dto.response.CommentResponse;
 import org.example.hive.dto.response.PostResponse;
+import org.example.hive.model.Attachment;
 import org.example.hive.model.Comment;
 import org.example.hive.model.Post;
+
+import java.util.Comparator;
+import java.util.List;
 
 public final class PostMapper {
 
@@ -39,6 +44,7 @@ public final class PostMapper {
                 .ownedByMe(currentUserId != null && currentUserId.equals(post.getAuthor().getId()))
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
+                .attachments(toAttachmentResponses(post.getAttachments()))
                 .build();
     }
 
@@ -53,6 +59,22 @@ public final class PostMapper {
                 .ownedByMe(currentUserId != null && currentUserId.equals(comment.getUser().getId()))
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
+                .attachments(toAttachmentResponses(comment.getAttachments()))
                 .build();
+    }
+
+    private static List<AttachmentResponse> toAttachmentResponses(List<Attachment> attachments) {
+        if (attachments == null || attachments.isEmpty()) {
+            return List.of();
+        }
+        return attachments.stream()
+                .sorted(Comparator.comparing(Attachment::getId))
+                .map(a -> new AttachmentResponse(
+                        a.getId(),
+                        "/attachments/" + a.getId(),
+                        a.getContentType(),
+                        a.getSizeBytes(),
+                        a.getAttachmentType()))
+                .toList();
     }
 }
