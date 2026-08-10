@@ -34,6 +34,57 @@ public class AttachmentController {
         attachmentService.deleteAvatar(principal);
     }
 
+    @PostMapping(value = "/events/{id}/cover", consumes = "multipart/form-data")
+    @PreAuthorize("isAuthenticated()")
+    public AttachmentResponse uploadEventCover(@PathVariable Long id,
+                                               @AuthenticationPrincipal AuthUserPrincipal principal,
+                                               @RequestParam("file") MultipartFile file) {
+        return attachmentService.uploadEventCover(principal, id, file);
+    }
+
+    @DeleteMapping("/events/{id}/cover")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteEventCover(@PathVariable Long id, @AuthenticationPrincipal AuthUserPrincipal principal) {
+        attachmentService.deleteEventCover(principal, id);
+    }
+
+    @PostMapping(value = "/posts/{id}/attachments", consumes = "multipart/form-data")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AttachmentResponse uploadPostAttachment(@PathVariable Long id,
+                                                   @AuthenticationPrincipal AuthUserPrincipal principal,
+                                                   @RequestParam("file") MultipartFile file) {
+        return attachmentService.uploadPostAttachment(principal, id, file);
+    }
+
+    @DeleteMapping("/posts/{id}/attachments/{attachmentId}")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePostAttachment(@PathVariable Long id,
+                                     @PathVariable Long attachmentId,
+                                     @AuthenticationPrincipal AuthUserPrincipal principal) {
+        attachmentService.deletePostAttachment(principal, id, attachmentId);
+    }
+
+    @PostMapping(value = "/posts/comments/{commentId}/attachments", consumes = "multipart/form-data")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AttachmentResponse uploadCommentAttachment(@PathVariable Long commentId,
+                                                      @AuthenticationPrincipal AuthUserPrincipal principal,
+                                                      @RequestParam("file") MultipartFile file) {
+        return attachmentService.uploadCommentAttachment(principal, commentId, file);
+    }
+
+    @DeleteMapping("/posts/comments/{commentId}/attachments/{attachmentId}")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCommentAttachment(@PathVariable Long commentId,
+                                        @PathVariable Long attachmentId,
+                                        @AuthenticationPrincipal AuthUserPrincipal principal) {
+        attachmentService.deleteCommentAttachment(principal, commentId, attachmentId);
+    }
+
     @GetMapping("/attachments/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Resource> download(@PathVariable Long id,

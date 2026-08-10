@@ -60,4 +60,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("companyId") Long companyId,
             @Param("teamIds") Collection<Long> teamIds,
             Pageable pageable);
+
+    Optional<Post> findByIdAndCompany_IdAndActiveTrue(Long id, Long companyId);
 }

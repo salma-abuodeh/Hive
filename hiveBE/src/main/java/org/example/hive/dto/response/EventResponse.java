@@ -25,4 +25,5 @@ public class EventResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private RsvpStatus myRsvpStatus;
+    private String coverUrl;
 }

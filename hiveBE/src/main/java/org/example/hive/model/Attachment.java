@@ -3,6 +3,7 @@ package org.example.hive.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.hive.config.AppEnums.AttachmentContext;
+import org.example.hive.config.AppEnums.AttachmentType;
 
 import java.time.LocalDateTime;
 
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"company", "uploadedBy"})
+@ToString(exclude = {"company", "uploadedBy", "post", "comment"})
 public class Attachment {
 
     @Id
@@ -33,6 +34,18 @@ public class Attachment {
     @Enumerated(EnumType.STRING)
     @Column(name = "context", nullable = false)
     private AttachmentContext context;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attachment_type", nullable = false)
+    private AttachmentType attachmentType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id")
+    private Comment comment;
 
     @Column(name = "storage_key", nullable = false, length = 500)
     private String storageKey;
