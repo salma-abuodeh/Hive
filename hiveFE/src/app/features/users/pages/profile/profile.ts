@@ -83,7 +83,7 @@ export class Profile implements OnInit {
     input.value = ''; // allow re-selecting the same file later
     if (!file) return;
 
-    const validationError = this.attachmentService.validate(file);
+const validationError = this.attachmentService.validate(file, 'AVATAR');
     if (validationError) {
       this.avatarError.set(validationError);
       return;

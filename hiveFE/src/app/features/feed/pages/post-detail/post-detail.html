@@ -14,6 +14,7 @@
       [saving]="busy()"
       [teams]="myTeams()"
       [companyName]="companyName()"
+      [autoExpandComments]="true"
       (edit)="onEdit($event)"
       (cancelEdit)="cancelEdit()"
       (saveEdit)="onSaveEdit($event)"
@@ -21,41 +22,8 @@
       (react)="onReact($event)"
       (saveToggle)="onSaveToggle($event)"
       (share)="onShare($event)"
+      (attachmentsChanged)="onAttachmentsChanged($event)"
+      (commentCountChanged)="onCommentCountChanged($event)"
     />
-
-    <section class="comments rise-in">
-      <h2>Comments</h2>
-
-      <form class="comment-form" (ngSubmit)="addComment()">
-        <textarea
-          [(ngModel)]="commentText"
-          name="commentText"
-          rows="2"
-          maxlength="2000"
-          placeholder="Write a comment..."
-        ></textarea>
-        <button type="submit" [disabled]="!commentText.trim()">Comment</button>
-      </form>
-
-      <ul class="comment-list">
-        @for (comment of comments(); track comment.id) {
-          <li>
-            <span class="hex avatar">{{ comment.authorFirstName[0] }}{{ comment.authorLastName[0] }}</span>
-            <div class="comment-body">
-              <div class="comment-head">
-                <strong>{{ comment.authorFirstName }} {{ comment.authorLastName }}</strong>
-                <time>{{ comment.createdAt | date: 'MMM d, y · h:mm a' }}</time>
-                @if (comment.ownedByMe) {
-                  <button type="button" class="text-btn" (click)="deleteComment(comment)">Delete</button>
-                }
-              </div>
-              <p>{{ comment.content }}</p>
-            </div>
-          </li>
-        } @empty {
-          <li class="empty-comments">No comments yet. Start the conversation.</li>
-        }
-      </ul>
-    </section>
   }
 </section>
