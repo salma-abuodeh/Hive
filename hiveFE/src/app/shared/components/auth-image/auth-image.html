@@ -1,0 +1,5 @@
+@if (objectUrl()) {
+  <img [src]="objectUrl()" [alt]="alt" class="auth-image" />
+} @else {
+  <ng-content></ng-content>
+}

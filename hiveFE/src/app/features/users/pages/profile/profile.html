@@ -18,7 +18,32 @@
   } @else {
     <article class="hero-card">
       <div class="hero-main">
-        <span class="hex avatar">{{ initials() }}</span>
+        <div class="avatar-upload">
+          <label class="hex avatar avatar-frame" for="avatarInput" [class.uploading]="avatarUploading()">
+            <app-auth-image [src]="avatarUrl()" alt="Profile photo">
+              <span class="avatar-fallback">{{ initials() }}</span>
+            </app-auth-image>
+            <span class="avatar-edit-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M4 20h4l10.5-10.5a1.5 1.5 0 0 0 0-2.1l-1.9-1.9a1.5 1.5 0 0 0-2.1 0L4 16v4Z"/>
+              </svg>
+            </span>
+          </label>
+          <input
+            id="avatarInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            class="visually-hidden"
+            [disabled]="avatarUploading()"
+            (change)="onAvatarSelected($event)"
+          />
+          @if (avatarUrl() && !avatarUploading()) {
+            <button type="button" class="avatar-remove-btn" (click)="removeAvatar()">Remove photo</button>
+          }
+          @if (avatarError()) {
+            <p class="notice error avatar-error" role="alert">{{ avatarError() }}</p>
+          }
+        </div>
         <div class="hero-copy">
           <h2>{{ fullName() }}</h2>
           <p class="headline">{{ headline() }}</p>

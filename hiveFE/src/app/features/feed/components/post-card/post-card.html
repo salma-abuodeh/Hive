@@ -60,6 +60,45 @@
   } @else {
     <p class="body">{{ post().content }}</p>
 
+    @if (post().attachments.length) {
+      <div class="attachment-grid">
+        @for (a of post().attachments; track a.id) {
+          <div class="attachment-tile">
+            @if (a.attachmentType === 'IMAGE') {
+              <button type="button" class="attachment-image-btn" (click)="openAttachment(a)">
+                <app-auth-image [src]="a.url" alt="Post attachment"></app-auth-image>
+              </button>
+            } @else {
+              <button type="button" class="attachment-doc" (click)="openAttachment(a)">
+                <span class="icon">📄</span>
+                <span class="doc-label">Open file</span>
+              </button>
+            }
+            @if (post().ownedByMe) {
+              <button type="button" class="attachment-remove" (click)="removeAttachment(a)" title="Remove">×</button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (post().ownedByMe) {
+      <div class="attachment-add">
+        <label class="attach-btn" [class.busy]="attachmentUploading()">
+          {{ attachmentUploading() ? 'Uploading…' : '+ Add photo or file' }}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx"
+            [disabled]="attachmentUploading()"
+            (change)="onFileSelected($event.target)"
+          >
+        </label>
+        @if (attachmentError()) {
+          <span class="field-error">{{ attachmentError() }}</span>
+        }
+      </div>
+    }
+
     <footer class="actions">
       <div class="reactions">
         @for (r of reactions; track r.type) {

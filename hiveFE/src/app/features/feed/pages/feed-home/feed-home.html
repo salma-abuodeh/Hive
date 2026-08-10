@@ -25,8 +25,35 @@
       ></textarea>
     </div>
 
+    @if (stagedPreviews().length) {
+      <div class="staged-grid">
+        @for (p of stagedPreviews(); track p.file) {
+          <div class="staged-tile">
+            @if (p.previewUrl) {
+              <img [src]="p.previewUrl" alt="">
+            } @else {
+              <div class="staged-doc">📄<span>{{ p.file.name }}</span></div>
+            }
+            <button type="button" class="staged-remove" (click)="removeStagedFile(p.file)" title="Remove">×</button>
+          </div>
+        }
+      </div>
+    }
+    @if (composerError()) {
+      <p class="field-error">{{ composerError() }}</p>
+    }
+
     <div class="composer-actions">
       <div class="visibility-group">
+        <label class="attach-btn">
+          📎 Attach
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx"
+            (change)="onComposerFileSelected($event.target)"
+          >
+        </label>
+
         <label class="visibility">
           <span class="sr-only">Visibility</span>
           <select [(ngModel)]="visibilityType" name="visibilityType" (ngModelChange)="onVisibilityChange()">
@@ -72,6 +99,7 @@
         (react)="onReact($event)"
         (saveToggle)="onSaveToggle($event)"
         (share)="onShare($event)"
+        (attachmentsChanged)="onAttachmentsChanged($event)"
       />
     } @empty {
       @if (!loading()) {

@@ -27,8 +27,14 @@
             [class.active]="selectedEvent()?.id === event.id"
             (click)="select(event)"
           >
-            @if (event.imageUrl) {
-              <div class="event-thumb" [style.background-image]="'url(' + event.imageUrl + ')'"></div>
+            @if (event.coverUrl) {
+              <div class="event-thumb">
+                <app-auth-image [src]="event.coverUrl" alt="">
+                  <div class="event-date-block">
+                    <span class="mon">{{ event.startTime | slice:5:7 }}/{{ event.startTime | slice:8:10 }}</span>
+                  </div>
+                </app-auth-image>
+              </div>
             } @else {
               <div class="event-date-block">
                 <span class="mon">{{ event.startTime | slice:5:7 }}/{{ event.startTime | slice:8:10 }}</span>
@@ -49,10 +55,10 @@
 
       <div class="panel event-detail">
         @if (selectedEvent()) {
-          <div
-            class="event-detail-hero"
-            [style.background-image]="selectedEvent()!.imageUrl ? ('url(' + selectedEvent()!.imageUrl + ')') : null"
-          >
+          <div class="event-detail-hero">
+            @if (selectedEvent()!.coverUrl) {
+              <app-auth-image [src]="selectedEvent()!.coverUrl" alt=""></app-auth-image>
+            }
             <div class="hero-overlay">
               <h2>{{ selectedEvent()!.title }}</h2>
             </div>
@@ -121,16 +127,26 @@
         <h2>{{ editingId != null ? 'Edit event' : 'Create event' }}</h2>
 
         <label class="photo-field">
-          Cover photo <em>(preview only — not saved yet)</em>
-          <div class="photo-dropzone" [class.has-photo]="photoPreview()">
-            @if (photoPreview()) {
-              <img [src]="photoPreview()" alt="Event cover preview">
-              <button type="button" class="photo-remove" (click)="clearPhoto()">Remove</button>
+          Cover photo
+          <div class="photo-dropzone" [class.has-photo]="stagedCoverPreview() || existingCoverUrl()">
+            @if (stagedCoverPreview()) {
+              <img [src]="stagedCoverPreview()" alt="New cover preview">
+              <button type="button" class="photo-remove" (click)="clearStagedPhoto()">Remove</button>
+            } @else if (existingCoverUrl()) {
+              <app-auth-image [src]="existingCoverUrl()" alt="Current cover">
+                <span class="photo-placeholder">Click to replace the cover photo</span>
+              </app-auth-image>
+              <button type="button" class="photo-remove" [disabled]="coverBusy()" (click)="removeExistingCover()">
+                {{ coverBusy() ? 'Removing…' : 'Remove' }}
+              </button>
             } @else {
               <span class="photo-placeholder">Click to add a cover photo</span>
             }
-            <input type="file" accept="image/*" (change)="onPhotoSelected($event.target)">
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="onPhotoSelected($event.target)">
           </div>
+          @if (coverError()) {
+            <p class="field-error">{{ coverError() }}</p>
+          }
         </label>
 
         <label>

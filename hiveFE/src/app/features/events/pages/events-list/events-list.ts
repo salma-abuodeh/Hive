@@ -4,6 +4,8 @@ import { DatePipe, SlicePipe } from '@angular/common';
 import { EventService } from '../../../../core/services/event.service';
 import { UserService } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AttachmentService } from '../../../../core/services/attachment.service';
+import { AuthImage } from '../../../../shared/components/auth-image/auth-image';
 import { UserResponse } from '../../../users/models/user.models';
 import {
   EventRequest,
@@ -16,13 +18,14 @@ import {
 @Component({
   selector: 'app-events-list',
   standalone: true,
-  imports: [FormsModule, DatePipe, SlicePipe],
+  imports: [FormsModule, DatePipe, SlicePipe, AuthImage],
   templateUrl: './events-list.html',
   styleUrl: './events-list.css'
 })
 export class EventsList implements OnInit {
   private readonly eventService = inject(EventService);
   private readonly userService = inject(UserService);
+  private readonly attachmentService = inject(AttachmentService);
   readonly auth = inject(AuthService);
 
   events = signal<EventResponse[]>([]);
@@ -42,7 +45,15 @@ export class EventsList implements OnInit {
   time = '';
   endTime = '';
   visibility: EventVisibility = 'COMPANY';
-  photoPreview = signal<string | null>(null);
+
+  // Cover photo: a newly-picked file staged locally (base64 preview only) until
+  // the event is saved and a real id exists to upload against. When editing an
+  // event that already has a cover, existingCoverUrl holds the real server path.
+  stagedCoverFile: File | null = null;
+  stagedCoverPreview = signal<string | null>(null);
+  existingCoverUrl = signal<string | null>(null);
+  coverError = signal('');
+  coverBusy = signal(false);
 
   // Invite modal
   showInviteModal = signal(false);
@@ -113,14 +124,42 @@ export class EventsList implements OnInit {
 
   onPhotoSelected(input: HTMLInputElement): void {
     const file = input.files?.[0];
+    input.value = '';
     if (!file) return;
+
+    const validationError = this.attachmentService.validate(file, 'EVENT_COVER');
+    if (validationError) {
+      this.coverError.set(validationError);
+      return;
+    }
+
+    this.coverError.set('');
+    this.stagedCoverFile = file;
     const reader = new FileReader();
-    reader.onload = () => this.photoPreview.set(reader.result as string);
+    reader.onload = () => this.stagedCoverPreview.set(reader.result as string);
     reader.readAsDataURL(file);
   }
 
-  clearPhoto(): void {
-    this.photoPreview.set(null);
+  clearStagedPhoto(): void {
+    this.stagedCoverFile = null;
+    this.stagedCoverPreview.set(null);
+  }
+
+  removeExistingCover(): void {
+    if (this.editingId == null) return;
+    this.coverBusy.set(true);
+    this.coverError.set('');
+    this.attachmentService.deleteEventCover(this.editingId).subscribe({
+      next: () => {
+        this.existingCoverUrl.set(null);
+        this.coverBusy.set(false);
+        this.load();
+      },
+      error: (err) => {
+        this.coverBusy.set(false);
+        this.coverError.set(err.error?.message ?? 'Failed to remove cover');
+      },
+    });
   }
 
   openCreateForm(): void {
@@ -132,7 +171,9 @@ export class EventsList implements OnInit {
     this.time = '';
     this.endTime = '';
     this.visibility = 'COMPANY';
-    this.photoPreview.set(null);
+    this.clearStagedPhoto();
+    this.existingCoverUrl.set(null);
+    this.coverError.set('');
     this.formError.set('');
     this.showForm.set(true);
   }
@@ -148,7 +189,9 @@ export class EventsList implements OnInit {
     this.time = start.toISOString().slice(11, 16);
     this.endTime = end.toISOString().slice(11, 16);
     this.visibility = event.visibility;
-    this.photoPreview.set(event.imageUrl ?? null);
+    this.clearStagedPhoto();
+    this.existingCoverUrl.set(event.coverUrl ?? null);
+    this.coverError.set('');
     this.formError.set('');
     this.showForm.set(true);
   }
@@ -180,16 +223,40 @@ export class EventsList implements OnInit {
       : this.eventService.create(payload);
 
     request.subscribe({
-      next: (saved) => {
-        this.saving.set(false);
-        this.showForm.set(false);
-        this.selectedEvent.set(saved);
-        this.load();
-      },
+      next: (saved) => this.afterSave(saved),
       error: (err) => {
         this.saving.set(false);
         this.formError.set(err.error?.message ?? 'Save failed');
       }
+    });
+  }
+
+  private afterSave(saved: EventResponse): void {
+    if (!this.stagedCoverFile) {
+      this.saving.set(false);
+      this.showForm.set(false);
+      this.selectedEvent.set(saved);
+      this.load();
+      return;
+    }
+
+    this.attachmentService.uploadEventCover(saved.id, this.stagedCoverFile).subscribe({
+      next: (attachment) => {
+        this.saving.set(false);
+        this.showForm.set(false);
+        this.clearStagedPhoto();
+        this.selectedEvent.set({ ...saved, coverUrl: attachment.url });
+        this.load();
+      },
+      error: (err) => {
+        // Event itself saved fine — only the cover upload failed. Close the form
+        // anyway rather than leaving the user stuck; they can re-open and retry the photo.
+        this.saving.set(false);
+        this.showForm.set(false);
+        this.selectedEvent.set(saved);
+        this.error.set(err.error?.message ?? 'Event saved, but the cover photo failed to upload');
+        this.load();
+      },
     });
   }
 
@@ -267,7 +334,7 @@ export class EventsList implements OnInit {
       next: () => {
         this.sendingInvites.set(false);
         this.selectedUserIds.set(new Set());
-        this.openInviteModal(event); // refresh both lists
+        this.openInviteModal(event);
       },
       error: (err) => {
         this.sendingInvites.set(false);

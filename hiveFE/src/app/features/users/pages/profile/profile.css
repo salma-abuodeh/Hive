@@ -80,6 +80,79 @@
   flex-shrink: 0;
 }
 
+.avatar-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.avatar-frame {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.avatar-frame.uploading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: var(--espresso);
+  color: #fff;
+  border-radius: 50%;
+  border: 2px solid var(--cream, #fff);
+}
+
+.avatar-edit-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.avatar-remove-btn {
+  background: none;
+  border: none;
+  color: var(--umber);
+  font-size: var(--fs-xs, 0.75rem);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatar-error {
+  max-width: 140px;
+  text-align: center;
+  font-size: var(--fs-xs, 0.75rem);
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .hero-copy h2 {
   margin: 0;
   font-size: var(--fs-lg);
