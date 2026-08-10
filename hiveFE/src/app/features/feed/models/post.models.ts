@@ -1,3 +1,5 @@
+import { AttachmentResponse } from '../../../shared/models/attachment.models';
+
 export type VisibilityType = 'COMPANY' | 'TEAM';
 export type ReactionType = 'LIKE' | 'LOVE' | 'LAUGHING' | 'SAD' | 'ANGRY';
 
@@ -21,6 +23,7 @@ export interface Post {
   ownedByMe: boolean;
   createdAt: string;
   updatedAt: string;
+  attachments: AttachmentResponse[];
 }
 
 export interface Comment {
@@ -33,6 +36,7 @@ export interface Comment {
   ownedByMe: boolean;
   createdAt: string;
   updatedAt: string;
+  attachments: AttachmentResponse[];
 }
 
 export interface PageResponse<T> {

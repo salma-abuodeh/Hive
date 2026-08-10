@@ -26,6 +26,7 @@ export interface UserResponse {
   companies?: CompanyMembership[];
   active: boolean;
   createdAt: string;
+  avatarUrl?: string | null;
 }
 
 export interface UpdateMeRequest {

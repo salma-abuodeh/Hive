@@ -211,3 +211,73 @@
     flex: 1;
   }
 }
+.staged-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.staged-tile {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #eadfce;
+}
+.staged-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.staged-doc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  background: var(--cream-dim);
+  font-size: 18px;
+  text-align: center;
+}
+.staged-doc span {
+  font-size: 9px;
+  padding: 0 4px;
+  word-break: break-all;
+}
+.staged-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.attach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs, 12px);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px solid #eadfce;
+  border-radius: 999px;
+}
+.attach-btn input[type="file"] {
+  display: none;
+}
+.field-error {
+  font-size: 11px;
+  color: var(--error);
+  margin: 4px 0 0;
+}

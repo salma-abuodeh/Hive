@@ -17,7 +17,7 @@ export interface EventResponse {
   createdAt: string;
   updatedAt: string;
   myRsvpStatus: RsvpStatus | null;
-  imageUrl?: string | null;
+  coverUrl?: string | null;
 }
 
 export interface EventRequest {
@@ -28,7 +28,6 @@ export interface EventRequest {
   endTime: string;
   teamId?: number | null;
   visibility?: EventVisibility;
-  imageUrl?: string | null;
 }
 
 export interface InviteUsersRequest {
