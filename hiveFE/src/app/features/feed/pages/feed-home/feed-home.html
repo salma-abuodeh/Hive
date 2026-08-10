@@ -100,6 +100,7 @@
         (saveToggle)="onSaveToggle($event)"
         (share)="onShare($event)"
         (attachmentsChanged)="onAttachmentsChanged($event)"
+        (commentCountChanged)="onCommentCountChanged($event)"
       />
     } @empty {
       @if (!loading()) {

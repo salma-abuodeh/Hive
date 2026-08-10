@@ -253,4 +253,9 @@ export class FeedHome implements OnInit {
       list.map((p) => (p.id === e.post.id ? { ...p, attachments: e.attachments } : p))
     );
   }
+  onCommentCountChanged(e: { post: Post; delta: number }): void {
+  this.posts.update((list) =>
+    list.map((p) => (p.id === e.post.id ? { ...p, commentCount: p.commentCount + e.delta } : p))
+  );
+}
 }

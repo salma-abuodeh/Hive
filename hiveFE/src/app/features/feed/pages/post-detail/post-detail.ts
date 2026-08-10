@@ -1,17 +1,16 @@
-import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TeamService } from '../../../../core/services/team.service';
 import { Team } from '../../../company/models/team.models';
 import { PostCard } from '../../components/post-card/post-card';
-import { Comment, Post, ReactionType } from '../../models/post.models';
+import { AttachmentResponse } from '../../../../shared/models/attachment.models';
+import { Post, ReactionType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
 @Component({
   selector: 'app-post-detail',
-  imports: [FormsModule, RouterLink, DatePipe, PostCard],
+  imports: [PostCard],
   templateUrl: './post-detail.html',
   styleUrl: './post-detail.css',
 })
@@ -23,13 +22,11 @@ export class PostDetail implements OnInit {
   auth = inject(AuthService);
 
   post = signal<Post | null>(null);
-  comments = signal<Comment[]>([]);
   myTeams = signal<Team[]>([]);
   loading = signal(true);
   busy = signal(false);
   error = signal('');
   editing = false;
-  commentText = '';
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -47,9 +44,6 @@ export class PostDetail implements OnInit {
       next: (post) => {
         this.post.set(post);
         this.loading.set(false);
-        this.postsApi.listComments(id).subscribe({
-          next: (comments) => this.comments.set(comments),
-        });
       },
       error: () => {
         this.error.set('Post not found');
@@ -60,31 +54,6 @@ export class PostDetail implements OnInit {
 
   companyName(): string {
     return this.auth.getUser()?.companies?.[0]?.name ?? 'your company';
-  }
-
-  addComment(): void {
-    const post = this.post();
-    const text = this.commentText.trim();
-    if (!post || !text) return;
-
-    this.postsApi.addComment(post.id, text).subscribe({
-      next: (comment) => {
-        this.comments.update((list) => [...list, comment]);
-        this.post.update((p) => (p ? { ...p, commentCount: p.commentCount + 1 } : p));
-        this.commentText = '';
-      },
-      error: (err) => this.error.set(err.error?.message ?? 'Could not comment'),
-    });
-  }
-
-  deleteComment(comment: Comment): void {
-    if (!confirm('Delete comment?')) return;
-    this.postsApi.deleteComment(comment.id).subscribe({
-      next: () => {
-        this.comments.update((list) => list.filter((c) => c.id !== comment.id));
-        this.post.update((p) => (p ? { ...p, commentCount: p.commentCount - 1 } : p));
-      },
-    });
   }
 
   onEdit(post: Post): void {
@@ -133,5 +102,13 @@ export class PostDetail implements OnInit {
 
   onShare(post: Post): void {
     navigator.clipboard.writeText(`${window.location.origin}/feed/${post.id}`);
+  }
+
+  onAttachmentsChanged(e: { post: Post; attachments: AttachmentResponse[] }): void {
+    this.post.update((p) => (p && p.id === e.post.id ? { ...p, attachments: e.attachments } : p));
+  }
+
+  onCommentCountChanged(e: { post: Post; delta: number }): void {
+    this.post.update((p) => (p && p.id === e.post.id ? { ...p, commentCount: p.commentCount + e.delta } : p));
   }
 }
