@@ -35,6 +35,14 @@ public final class Permissions {
     public static final String POLL_CREATE = of(PermissionResource.POLL, PermissionAction.CREATE);
     public static final String POLL_UPDATE = of(PermissionResource.POLL, PermissionAction.UPDATE);
     public static final String POLL_DELETE = of(PermissionResource.POLL, PermissionAction.DELETE);
+
+    //Conversation
+    public static final String CONVERSATION_VIEW = of(PermissionResource.CONVERSATION, PermissionAction.VIEW);
+    public static final String CONVERSATION_CREATE = of(PermissionResource.CONVERSATION, PermissionAction.CREATE);
+    public static final String CONVERSATION_MANAGE_MEMBERS = of(PermissionResource.CONVERSATION, PermissionAction.MANAGE_MEMBERS);
+    //Message
+    public static final String MESSAGE_CREATE = of(PermissionResource.MESSAGE, PermissionAction.CREATE);
+    public static final String MESSAGE_DELETE = of(PermissionResource.MESSAGE, PermissionAction.DELETE);
     /** Platform-only operations (e.g. manage users across all companies). */
     public static final String PLATFORM_MANAGE = "PLATFORM_MANAGE";
     public static String of(PermissionResource resource, PermissionAction action) {

@@ -32,18 +32,21 @@ public class TeamService {
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final UserCompanyRepository userCompanyRepository;
+    private final ConversationService conversationService;
 
     public TeamService(
             TeamRepository teamRepository,
             UserTeamRepository userTeamRepository,
             CompanyRepository companyRepository,
             UserRepository userRepository,
-            UserCompanyRepository userCompanyRepository) {
+            UserCompanyRepository userCompanyRepository,
+            ConversationService conversationService) {
         this.teamRepository = teamRepository;
         this.userTeamRepository = userTeamRepository;
         this.companyRepository = companyRepository;
         this.userRepository = userRepository;
         this.userCompanyRepository = userCompanyRepository;
+        this.conversationService = conversationService;
     }
 
     @Transactional(readOnly = true)
@@ -87,6 +90,8 @@ public class TeamService {
                 .user(creator)
                 .team(team)
                 .build());
+
+        conversationService.createForTeam(team, creator);
 
         return toSummary(team, 1L);
     }
@@ -136,6 +141,7 @@ public class TeamService {
                     .user(user)
                     .team(team)
                     .build());
+            conversationService.syncAddTeamMember(team, user);
         }
 
         return toDetail(team);
@@ -148,6 +154,7 @@ public class TeamService {
             throw new TeamException("User is not on this team", HttpStatus.NOT_FOUND);
         }
         userTeamRepository.deleteByUser_IdAndTeam_Id(userId, teamId);
+        conversationService.syncRemoveTeamMember(teamId, userId);
         return toDetail(requireTeam(principal, teamId));
     }
 

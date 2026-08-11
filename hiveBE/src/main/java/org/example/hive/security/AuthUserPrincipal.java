@@ -3,9 +3,13 @@ package org.example.hive.security;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.Principal;
 import java.util.Collection;
 
-public class AuthUserPrincipal implements UserDetails {
+// Implements Principal too so the same object can sit in a STOMP session
+// (accessor.setUser(...)) as well as the regular HttpServletRequest security
+// context - one identity object for both entry points.
+public class AuthUserPrincipal implements UserDetails, Principal {
 
     private final Long userId;
     private final Long companyId;
@@ -48,6 +52,12 @@ public class AuthUserPrincipal implements UserDetails {
 
     @Override
     public String getUsername() {
+        return email;
+    }
+
+    // java.security.Principal
+    @Override
+    public String getName() {
         return email;
     }
 

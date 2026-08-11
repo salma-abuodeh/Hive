@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"company", "uploadedBy", "post", "comment"})
+@ToString(exclude = {"company", "uploadedBy", "post", "comment", "message"})
 public class Attachment {
 
     @Id
@@ -46,6 +46,10 @@ public class Attachment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id")
     private Comment comment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "message_id")
+    private Message message;
 
     @Column(name = "storage_key", nullable = false, length = 500)
     private String storageKey;
