@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 
 import { UserService } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AttachmentService } from '../../../../core/services/attachment.service';
+import { AuthImage } from '../../../../shared/components/auth-image/auth-image';
 import { CompanyMembership, TeamSummary, UpdateMeRequest } from '../../models/user.models';
 
 type ProfileTab = 'about' | 'posts';
@@ -12,13 +14,14 @@ type ProfileTab = 'about' | 'posts';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, DatePipe, RouterLink],
+  imports: [FormsModule, DatePipe, RouterLink, AuthImage],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
 export class Profile implements OnInit {
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
+  private readonly attachmentService = inject(AttachmentService);
   private readonly platformId = inject(PLATFORM_ID);
 
   firstName = '';
@@ -41,6 +44,10 @@ export class Profile implements OnInit {
   success = signal('');
   tab = signal<ProfileTab>('about');
 
+  avatarUrl = signal<string | null>(null);
+  avatarUploading = signal(false);
+  avatarError = signal('');
+
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     this.load();
@@ -60,11 +67,53 @@ export class Profile implements OnInit {
         this.companies.set(user.companies ?? []);
         this.activeCompanyId.set(user.activeCompanyId ?? null);
         this.teams.set(user.teams ?? []);
+        this.avatarUrl.set(user.avatarUrl ?? null);
         this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message ?? 'Failed to load profile');
+      },
+    });
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+const validationError = this.attachmentService.validate(file, 'AVATAR');
+    if (validationError) {
+      this.avatarError.set(validationError);
+      return;
+    }
+
+    this.avatarError.set('');
+    this.avatarUploading.set(true);
+    this.attachmentService.uploadAvatar(file).subscribe({
+      next: (attachment) => {
+        this.avatarUrl.set(attachment.url);
+        this.avatarUploading.set(false);
+      },
+      error: (err) => {
+        this.avatarUploading.set(false);
+        this.avatarError.set(err.error?.message ?? 'Failed to upload photo');
+      },
+    });
+  }
+
+  removeAvatar(): void {
+    this.avatarError.set('');
+    this.avatarUploading.set(true);
+    this.attachmentService.deleteAvatar().subscribe({
+      next: () => {
+        this.avatarUrl.set(null);
+        this.avatarUploading.set(false);
+      },
+      error: (err) => {
+        this.avatarUploading.set(false);
+        this.avatarError.set(err.error?.message ?? 'Failed to remove photo');
       },
     });
   }

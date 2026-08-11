@@ -18,6 +18,7 @@ import { EventsList } from './features/events/pages/events-list/events-list';
 import { ManagementHome } from './features/management/pages/management-home/management-home';
 import { managementGuard } from './core/guards/management.guard';
 import { ChatsHome } from './features/chats/pages/chats-home/chats-home';
+import { PollsList } from './features/polls/pages/polls-list/polls-list';
 
 export const routes: Routes = [
   {
@@ -44,6 +45,7 @@ export const routes: Routes = [
       { path: 'users', component: UsersList, canActivate: [authGuard, adminGuard] },
       { path: 'management', component: ManagementHome, canActivate: [authGuard, managementGuard] },
       { path: 'events', component: EventsList, canActivate: [authGuard] },
+      { path: 'polls', component: PollsList, canActivate: [authGuard] },
     ]
   },
   {

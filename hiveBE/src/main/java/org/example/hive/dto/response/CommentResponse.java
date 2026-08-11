@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -17,4 +18,5 @@ public class CommentResponse {
     private boolean ownedByMe;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<AttachmentResponse> attachments;
 }

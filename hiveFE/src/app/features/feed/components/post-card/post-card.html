@@ -60,6 +60,57 @@
   } @else {
     <p class="body">{{ post().content }}</p>
 
+    @if (visibleImages().length) {
+      <div class="photo-grid" [class]="'photo-grid count-' + visibleImages().length">
+        @for (a of visibleImages(); track a.id; let i = $index) {
+          <div class="photo-tile">
+            <button type="button" class="photo-tile-btn" (click)="openImage(i)">
+              <app-auth-image [src]="a.url" alt="Post photo"></app-auth-image>
+            </button>
+            @if (i === 3 && extraImageCount() > 0) {
+              <div class="photo-tile-overlay">+{{ extraImageCount() }}</div>
+            }
+            @if (post().ownedByMe) {
+              <button type="button" class="attachment-remove" (click)="removeAttachment(a)" title="Remove">×</button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (documents().length) {
+      <div class="doc-list">
+        @for (d of documents(); track d.id) {
+          <div class="doc-chip">
+            <button type="button" class="doc-chip-btn" (click)="openAttachment(d)">
+              <span class="icon">📄</span>
+              <span>Open file</span>
+            </button>
+            @if (post().ownedByMe) {
+              <button type="button" class="attachment-remove" (click)="removeAttachment(d)" title="Remove">×</button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (post().ownedByMe) {
+      <div class="attachment-add">
+        <label class="attach-btn" [class.busy]="attachmentUploading()">
+          {{ attachmentUploading() ? 'Uploading…' : '+ Add photo or file' }}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx"
+            [disabled]="attachmentUploading()"
+            (change)="onFileSelected($event.target)"
+          >
+        </label>
+        @if (attachmentError()) {
+          <span class="field-error">{{ attachmentError() }}</span>
+        }
+      </div>
+    }
+
     <footer class="actions">
       <div class="reactions">
         @for (r of reactions; track r.type) {
@@ -76,10 +127,10 @@
         <span class="count">{{ post().likeCount }}</span>
       </div>
 
-      <a class="action" [routerLink]="['/feed', post().id]">
+      <button type="button" class="action" (click)="toggleComments()">
         <span class="icon">💬</span>
         <span>{{ post().commentCount }}</span>
-      </a>
+      </button>
 
       <button type="button" class="action" (click)="share.emit(post())">
         <span class="icon">↗</span>
@@ -90,5 +141,161 @@
         <span class="icon">{{ post().savedByMe ? '★' : '☆' }}</span>
       </button>
     </footer>
+
+    @if (commentsOpen()) {
+      <section class="inline-comments">
+        <form class="comment-form" (ngSubmit)="addComment()">
+          <textarea
+            [(ngModel)]="commentText"
+            name="commentText"
+            rows="2"
+            maxlength="2000"
+            placeholder="Write a comment..."
+          ></textarea>
+
+          @if (stagedCommentPreviews().length) {
+            <div class="comment-staged-grid">
+              @for (p of stagedCommentPreviews(); track p.file) {
+                <div class="comment-staged-tile">
+                  @if (p.previewUrl) {
+                    <img [src]="p.previewUrl" alt="">
+                  } @else {
+                    <div class="comment-staged-doc">📄</div>
+                  }
+                  <button type="button" class="comment-staged-remove" (click)="removeStagedCommentFile(p.file)">×</button>
+                </div>
+              }
+            </div>
+          }
+          @if (commentAttachError()) {
+            <p class="field-error">{{ commentAttachError() }}</p>
+          }
+
+          <div class="comment-form-actions">
+            <label class="comment-attach-btn">
+              📎
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx"
+                (change)="onCommentFileSelected($event.target)"
+              >
+            </label>
+            <button type="submit" [disabled]="!commentText.trim() || commentSubmitting()">
+              {{ commentSubmitting() ? 'Posting…' : 'Comment' }}
+            </button>
+          </div>
+        </form>
+
+        @if (commentError()) {
+          <p class="field-error">{{ commentError() }}</p>
+        }
+
+        @if (commentsLoading()) {
+          <p class="loading-label">Loading comments…</p>
+        } @else {
+          <ul class="comment-list">
+            @for (comment of comments(); track comment.id) {
+              <li>
+                <span class="hex avatar comment-avatar">{{ comment.authorFirstName[0] }}{{ comment.authorLastName[0] }}</span>
+                <div class="comment-body">
+                  <div class="comment-head">
+                    <strong>{{ comment.authorFirstName }} {{ comment.authorLastName }}</strong>
+                    <time>{{ comment.createdAt | date: 'MMM d, y · h:mm a' }}</time>
+                    @if (comment.ownedByMe) {
+                      <button type="button" class="text-btn danger" (click)="deleteComment(comment)">Delete</button>
+                    }
+                  </div>
+                  <p>{{ comment.content }}</p>
+
+                  @if (commentImages(comment).length) {
+                    <div class="comment-attachments">
+                      @for (a of commentImages(comment); track a.id; let i = $index) {
+                        <div class="comment-attachment-tile">
+                          <button type="button" class="comment-attachment-btn" (click)="openCommentImage(comment, i)">
+                            <app-auth-image [src]="a.url" alt="Comment attachment"></app-auth-image>
+                          </button>
+                          @if (comment.ownedByMe) {
+                            <button
+                              type="button"
+                              class="comment-attachment-remove"
+                              (click)="removeCommentAttachment(comment, a)"
+                              title="Remove"
+                            >×</button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (commentDocuments(comment).length) {
+                    <div class="comment-attachments">
+                      @for (d of commentDocuments(comment); track d.id) {
+                        <div class="comment-attachment-tile">
+                          <button type="button" class="comment-attachment-doc" (click)="openCommentAttachment(d)">📄</button>
+                          @if (comment.ownedByMe) {
+                            <button
+                              type="button"
+                              class="comment-attachment-remove"
+                              (click)="removeCommentAttachment(comment, d)"
+                              title="Remove"
+                            >×</button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </li>
+            } @empty {
+              <li class="empty-comments">No comments yet. Start the conversation.</li>
+            }
+          </ul>
+        }
+      </section>
+    }
   }
 </article>
+
+@if (postLightboxIndex() !== null) {
+  <div class="lightbox-backdrop" (click)="closePostLightbox()">
+    <button type="button" class="lightbox-close" (click)="closePostLightbox()">×</button>
+
+    @if (images().length > 1) {
+      <button type="button" class="lightbox-nav prev" (click)="prevImage(); $event.stopPropagation()">‹</button>
+    }
+
+    <div class="lightbox-image" (click)="$event.stopPropagation()">
+      @if (postLightboxLoading()) {
+        <span class="lightbox-loading">Loading…</span>
+      } @else if (postLightboxUrl()) {
+        <img [src]="postLightboxUrl()" alt="Post photo">
+      }
+    </div>
+
+    @if (images().length > 1) {
+      <button type="button" class="lightbox-nav next" (click)="nextImage(); $event.stopPropagation()">›</button>
+    }
+  </div>
+}
+
+@if (lightboxComment() !== null) {
+  <div class="lightbox-backdrop" (click)="closeLightbox()">
+    <button type="button" class="lightbox-close" (click)="closeLightbox()">×</button>
+
+    @if (lightboxHasMultiple()) {
+      <button type="button" class="lightbox-nav prev" (click)="prevLightboxImage(); $event.stopPropagation()">‹</button>
+    }
+
+    <div class="lightbox-image" (click)="$event.stopPropagation()">
+      @if (lightboxLoading()) {
+        <span class="lightbox-loading">Loading…</span>
+      } @else if (lightboxUrl()) {
+        <img [src]="lightboxUrl()" alt="Comment attachment">
+      }
+    </div>
+
+    @if (lightboxHasMultiple()) {
+      <button type="button" class="lightbox-nav next" (click)="nextLightboxImage(); $event.stopPropagation()">›</button>
+    }
+  </div>
+}

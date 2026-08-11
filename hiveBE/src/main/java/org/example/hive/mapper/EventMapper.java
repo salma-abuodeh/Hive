@@ -27,7 +27,8 @@ public final class EventMapper {
                 event.getActive(),
                 event.getCreatedAt(),
                 event.getUpdatedAt(),
-                myRsvpStatus
+                myRsvpStatus,
+                event.getCover() != null ? "/attachments/" + event.getCover().getId() : null
         );
     }
 

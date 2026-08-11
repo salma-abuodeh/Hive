@@ -34,6 +34,10 @@ public class Event {
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private User createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cover_attachment_id")
+    private Attachment cover;
+
     @Column(nullable = false)
     private String title;
 

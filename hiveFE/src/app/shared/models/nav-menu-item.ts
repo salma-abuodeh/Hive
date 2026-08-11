@@ -14,7 +14,8 @@ export type AppIcon =
   | 'events'
   | 'chat'
   | 'message'
-  | 'send';
+  | 'send'
+  | 'poll';
 export type NavIcon = AppIcon;
 
 export interface NavMenuItem {

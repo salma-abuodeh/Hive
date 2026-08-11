@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "comments")
@@ -40,6 +42,10 @@ public class Comment {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "comment", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Attachment> attachments = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

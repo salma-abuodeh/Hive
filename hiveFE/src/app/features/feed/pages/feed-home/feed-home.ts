@@ -2,8 +2,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TeamService } from '../../../../core/services/team.service';
+import { AttachmentService } from '../../../../core/services/attachment.service';
 import { Team } from '../../../company/models/team.models';
 import { PostCard } from '../../components/post-card/post-card';
+import { AttachmentResponse } from '../../../../shared/models/attachment.models';
 import { Post, ReactionType, VisibilityType } from '../../models/post.models';
 import { PostService } from '../../services/post.service';
 
@@ -16,6 +18,7 @@ import { PostService } from '../../services/post.service';
 export class FeedHome implements OnInit {
   private postsApi = inject(PostService);
   private teamsApi = inject(TeamService);
+  private attachmentService = inject(AttachmentService);
   auth = inject(AuthService);
 
   posts = signal<Post[]>([]);
@@ -31,6 +34,12 @@ export class FeedHome implements OnInit {
   content = '';
   visibilityType: VisibilityType = 'COMPANY';
   teamId: number | null = null;
+
+  // Files picked before the post exists — uploaded one-by-one right after publish()
+  // succeeds and we have a real postId to attach them to.
+  stagedFiles: File[] = [];
+  stagedPreviews = signal<{ file: File; previewUrl: string | null }[]>([]);
+  composerError = signal('');
 
   ngOnInit(): void {
     const editPost = history.state?.['editPost'] as Post | undefined;
@@ -61,6 +70,47 @@ export class FeedHome implements OnInit {
     } else if (this.myTeams().length && this.teamId == null) {
       this.teamId = this.myTeams()[0].id;
     }
+  }
+
+  onComposerFileSelected(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (this.stagedFiles.length >= 10) {
+      this.composerError.set('A post can have at most 10 attachments');
+      return;
+    }
+
+    const validationError = this.attachmentService.validate(file, 'POST');
+    if (validationError) {
+      this.composerError.set(validationError);
+      return;
+    }
+
+    this.composerError.set('');
+    this.stagedFiles.push(file);
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.stagedPreviews.update((list) => [...list, { file, previewUrl: reader.result as string }]);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.stagedPreviews.update((list) => [...list, { file, previewUrl: null }]);
+    }
+  }
+
+  removeStagedFile(file: File): void {
+    this.stagedFiles = this.stagedFiles.filter((f) => f !== file);
+    this.stagedPreviews.update((list) => list.filter((p) => p.file !== file));
+  }
+
+  private clearComposerStaging(): void {
+    this.stagedFiles = [];
+    this.stagedPreviews.set([]);
+    this.composerError.set('');
   }
 
   loadFeed(reset = false): void {
@@ -95,19 +145,46 @@ export class FeedHome implements OnInit {
         teamId: this.visibilityType === 'TEAM' ? this.teamId : null,
       })
       .subscribe({
-        next: (post) => {
-          this.posts.update((list) => [post, ...list]);
-          this.content = '';
-          this.visibilityType = 'COMPANY';
-          this.teamId = null;
-          this.busy.set(false);
-          this.toast.set('Published');
-        },
+        next: (post) => this.afterPublish(post),
         error: (err) => {
           this.error.set(err.error?.message ?? 'Could not publish');
           this.busy.set(false);
         },
       });
+  }
+
+  private afterPublish(post: Post): void {
+    if (this.stagedFiles.length === 0) {
+      this.finishPublish(post);
+      return;
+    }
+    this.uploadStagedFiles(post, [...this.stagedFiles], []);
+  }
+
+  private uploadStagedFiles(post: Post, remaining: File[], uploaded: AttachmentResponse[]): void {
+    if (remaining.length === 0) {
+      this.finishPublish({ ...post, attachments: uploaded });
+      return;
+    }
+    const [next, ...rest] = remaining;
+    this.attachmentService.uploadPostAttachment(post.id, next).subscribe({
+      next: (attachment) => this.uploadStagedFiles(post, rest, [...uploaded, attachment]),
+      error: (err) => {
+        // Post is already published; surface the error but don't block on the rest of the batch.
+        this.error.set(err.error?.message ?? 'Post published, but one attachment failed to upload');
+        this.finishPublish({ ...post, attachments: uploaded });
+      },
+    });
+  }
+
+  private finishPublish(post: Post): void {
+    this.posts.update((list) => [post, ...list]);
+    this.content = '';
+    this.visibilityType = 'COMPANY';
+    this.teamId = null;
+    this.clearComposerStaging();
+    this.busy.set(false);
+    this.toast.set('Published');
   }
 
   onEdit(post: Post): void {
@@ -170,4 +247,15 @@ export class FeedHome implements OnInit {
     navigator.clipboard.writeText(`${window.location.origin}/feed/${post.id}`);
     this.toast.set('Link copied');
   }
+
+  onAttachmentsChanged(e: { post: Post; attachments: AttachmentResponse[] }): void {
+    this.posts.update((list) =>
+      list.map((p) => (p.id === e.post.id ? { ...p, attachments: e.attachments } : p))
+    );
+  }
+  onCommentCountChanged(e: { post: Post; delta: number }): void {
+  this.posts.update((list) =>
+    list.map((p) => (p.id === e.post.id ? { ...p, commentCount: p.commentCount + e.delta } : p))
+  );
+}
 }
