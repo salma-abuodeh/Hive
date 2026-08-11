@@ -1,0 +1,26 @@
+<section class="chat-detail" aria-live="polite">
+  @if (conversation(); as chat) {
+    <header class="chat-header">
+      <span class="chat-avatar hex">{{ chat.initials }}</span>
+      <div><h2>{{ chat.name }}</h2><p>{{ chat.type === 'team' ? 'Team channel' : chat.type === 'group' ? 'Group chat' : 'Direct message' }}</p></div>
+    </header>
+    <div class="message-list">
+      @for (message of chat.messages; track message.id) {
+        <article class="message" [class.mine]="message.isMine">
+          @if (!message.isMine) { <span class="message-avatar hex">{{ message.initials }}</span> }
+          <div class="message-content"><strong>{{ message.sender }}</strong><p>{{ message.body }}</p><time>{{ message.sentAt }}</time></div>
+        </article>
+      }
+    </div>
+    <div class="composer" aria-label="Message composer">
+      <input type="text" placeholder="Messaging will be available soon" disabled>
+      <button type="button" disabled aria-label="Send message"><app-icon name="send" /></button>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <span class="empty-icon hex"><app-icon name="message" /></span>
+      <h2>Pick a conversation</h2>
+      <p>Choose a chat on the left to start messaging.</p>
+    </div>
+  }
+</section>

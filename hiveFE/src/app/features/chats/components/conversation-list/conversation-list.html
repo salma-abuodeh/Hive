@@ -1,0 +1,27 @@
+<aside class="conversation-list" aria-label="Conversations">
+  <label class="search-box">
+    <app-icon name="search" />
+    <input type="search" placeholder="Search conversations..." readonly aria-label="Search conversations">
+  </label>
+
+  <div class="conversation-sections">
+    @if (conversations().length === 0) {
+      <p class="empty-conversations">No conversations yet.</p>
+    } @else {
+      @for (category of categories; track category) {
+        @if (conversationsFor(category).length > 0) {
+          <section class="conversation-section">
+            <h2>{{ labels[category] }}</h2>
+            @for (conversation of conversationsFor(category); track conversation.id) {
+              <app-conversation-row
+                [conversation]="conversation"
+                [active]="conversation.id === selectedId()"
+                (selected)="conversationSelected.emit($event)"
+              />
+            }
+          </section>
+        }
+      }
+    }
+  </div>
+</aside>

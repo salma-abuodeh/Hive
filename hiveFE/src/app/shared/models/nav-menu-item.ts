@@ -12,6 +12,9 @@ export type AppIcon =
   | 'plus'
   | 'chevronDown'
   | 'events'
+  | 'chat'
+  | 'message'
+  | 'send'
   | 'poll';
 export type NavIcon = AppIcon;
 
