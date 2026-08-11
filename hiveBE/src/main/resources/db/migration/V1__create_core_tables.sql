@@ -161,42 +161,6 @@ CREATE TABLE logs (
                       created_at      TIMESTAMP    NOT NULL DEFAULT now()
 );
 
--- ==================== CHAT ====================
-
-CREATE TABLE conversations (
-                               id                  BIGSERIAL PRIMARY KEY,
-                               company_id          BIGINT      NOT NULL REFERENCES companies(id),
-                               conversation_type   VARCHAR(50) NOT NULL,
-                               name                VARCHAR(255),
-                               created_at          TIMESTAMP   NOT NULL DEFAULT now()
-);
-
-CREATE TABLE conversation_members (
-                                      id                      BIGSERIAL PRIMARY KEY,
-                                      conversation_id         BIGINT    NOT NULL REFERENCES conversations(id),
-                                      user_id                 BIGINT    NOT NULL REFERENCES users(id),
-                                      joined_at               TIMESTAMP NOT NULL DEFAULT now(),
-                                      UNIQUE (conversation_id, user_id)
-);
-
-CREATE TABLE messages (
-                          id               BIGSERIAL PRIMARY KEY,
-                          conversation_id  BIGINT      NOT NULL REFERENCES conversations(id),
-                          sender_user_id   BIGINT      NOT NULL REFERENCES users(id),
-                          content          TEXT,
-                          message_type     VARCHAR(50) NOT NULL DEFAULT 'text',
-                          created_at       TIMESTAMP   NOT NULL DEFAULT now()
-);
-
-CREATE TABLE message_attachments (
-                                     id              BIGSERIAL PRIMARY KEY,
-                                     message_id      BIGINT       NOT NULL REFERENCES messages(id),
-                                     file_url        VARCHAR(500) NOT NULL,
-                                     file_name       VARCHAR(255) NOT NULL,
-                                     file_size       BIGINT,
-                                     created_at      TIMESTAMP    NOT NULL DEFAULT now()
-);
-
 -- ==================== EVENTS ====================
 
 CREATE TABLE events (
@@ -258,6 +222,47 @@ CREATE TABLE poll_votes (
                             UNIQUE (poll_id, option_id, user_id)
 );
 
+-- ==================== CHAT ====================
+
+CREATE TABLE conversations (
+                               id                  BIGSERIAL PRIMARY KEY,
+                               company_id          BIGINT      NOT NULL REFERENCES companies(id),
+                               conversation_type   VARCHAR(50) NOT NULL,
+                               team_id             BIGINT REFERENCES teams(id),
+                               direct_key          VARCHAR(50),
+                               created_by_user_id  BIGINT REFERENCES users(id),
+                               name                VARCHAR(255),
+                               created_at          TIMESTAMP   NOT NULL DEFAULT now(),
+                               CONSTRAINT chk_conversation_team CHECK (
+                                   (conversation_type = 'TEAM' AND team_id IS NOT NULL) OR
+                                   (conversation_type <> 'TEAM' AND team_id IS NULL)
+                                   ),
+                               CONSTRAINT chk_conversation_direct_key CHECK (
+                                   (conversation_type = 'DIRECT' AND direct_key IS NOT NULL) OR
+                                   (conversation_type <> 'DIRECT' AND direct_key IS NULL)
+                                   )
+);
+CREATE UNIQUE INDEX uq_conversation_direct_key ON conversations(company_id, direct_key) WHERE direct_key IS NOT NULL;
+CREATE UNIQUE INDEX uq_conversation_team ON conversations(team_id) WHERE team_id IS NOT NULL;
+
+CREATE TABLE conversation_members (
+                                      id                      BIGSERIAL PRIMARY KEY,
+                                      conversation_id         BIGINT    NOT NULL REFERENCES conversations(id),
+                                      user_id                 BIGINT    NOT NULL REFERENCES users(id),
+                                      joined_at               TIMESTAMP NOT NULL DEFAULT now(),
+                                      last_read_at            TIMESTAMP,
+                                      UNIQUE (conversation_id, user_id)
+);
+
+CREATE TABLE messages (
+                          id               BIGSERIAL PRIMARY KEY,
+                          conversation_id  BIGINT      NOT NULL REFERENCES conversations(id),
+                          sender_user_id   BIGINT      NOT NULL REFERENCES users(id),
+                          content          TEXT,
+                          message_type     VARCHAR(50) NOT NULL DEFAULT 'text',
+                          created_at       TIMESTAMP   NOT NULL DEFAULT now()
+);
+
 -- ==================== TENANT-SCOPING INDEXES ====================
 
 CREATE INDEX idx_teams_company ON teams(company_id);
@@ -276,6 +281,7 @@ CREATE INDEX idx_notifications_company_user ON notifications(company_id, user_id
 CREATE INDEX idx_logs_company ON logs(company_id);
 CREATE INDEX idx_conversations_company ON conversations(company_id);
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX idx_conversation_members_user ON conversation_members(user_id);
 CREATE INDEX idx_events_company ON events(company_id);
 CREATE INDEX idx_polls_company ON polls(company_id);
 CREATE INDEX idx_polls_team ON polls(team_id);

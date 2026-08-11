@@ -7,12 +7,14 @@ import org.example.hive.model.Attachment;
 import org.example.hive.model.Comment;
 import org.example.hive.model.Company;
 import org.example.hive.model.Event;
+import org.example.hive.model.Message;
 import org.example.hive.model.Post;
 import org.example.hive.model.User;
 import org.example.hive.repository.AttachmentRepository;
 import org.example.hive.repository.CommentRepository;
 import org.example.hive.repository.CompanyRepository;
 import org.example.hive.repository.EventRepository;
+import org.example.hive.repository.MessageRepository;
 import org.example.hive.repository.PostRepository;
 import org.example.hive.repository.UserRepository;
 import org.example.hive.security.AuthUserPrincipal;
@@ -35,6 +37,7 @@ public class AttachmentService {
 
     private static final int MAX_ATTACHMENTS_PER_POST = 10;
     private static final int MAX_ATTACHMENTS_PER_COMMENT = 5;
+    private static final int MAX_ATTACHMENTS_PER_MESSAGE = 5;
 
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
@@ -42,6 +45,7 @@ public class AttachmentService {
     private final EventRepository eventRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final MessageRepository messageRepository;
     private final StorageService storageService;
 
     public AttachmentService(AttachmentRepository attachmentRepository,
@@ -50,6 +54,7 @@ public class AttachmentService {
                              EventRepository eventRepository,
                              PostRepository postRepository,
                              CommentRepository commentRepository,
+                             MessageRepository messageRepository,
                              StorageService storageService) {
         this.attachmentRepository = attachmentRepository;
         this.userRepository = userRepository;
@@ -57,6 +62,7 @@ public class AttachmentService {
         this.eventRepository = eventRepository;
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
+        this.messageRepository = messageRepository;
         this.storageService = storageService;
     }
 
@@ -279,6 +285,62 @@ public class AttachmentService {
         attachmentRepository.delete(attachment);
     }
 
+    @Transactional
+    public AttachmentResponse uploadMessageAttachment(AuthUserPrincipal principal, Long messageId, MultipartFile file) {
+        Long companyId = requireCompany(principal);
+
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new AttachmentException("Message not found", HttpStatus.NOT_FOUND));
+        assertSameCompany(message, companyId);
+
+        if (!message.getSender().getId().equals(principal.getUserId())) {
+            throw new AttachmentException("Only the sender can add attachments to this message", HttpStatus.FORBIDDEN);
+        }
+        if (attachmentRepository.countByMessage_Id(messageId) >= MAX_ATTACHMENTS_PER_MESSAGE) {
+            throw new AttachmentException(
+                    "A message can have at most " + MAX_ATTACHMENTS_PER_MESSAGE + " attachments", HttpStatus.BAD_REQUEST);
+        }
+
+        User uploader = userRepository.findById(principal.getUserId())
+                .orElseThrow(() -> new AttachmentException("User not found", HttpStatus.NOT_FOUND));
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new AttachmentException("Company not found", HttpStatus.NOT_FOUND));
+
+        StoredFile stored = storageService.store(file, companyId, AttachmentContext.CHAT_MESSAGE);
+        Attachment attachment = attachmentRepository.save(Attachment.builder()
+                .company(company)
+                .uploadedBy(uploader)
+                .context(AttachmentContext.CHAT_MESSAGE)
+                .attachmentType(stored.attachmentType())
+                .storageKey(stored.storageKey())
+                .originalFilename(stored.originalFilename())
+                .contentType(stored.contentType())
+                .sizeBytes(stored.sizeBytes())
+                .message(message)
+                .build());
+
+        return toResponse(attachment);
+    }
+
+    @Transactional
+    public void deleteMessageAttachment(AuthUserPrincipal principal, Long messageId, Long attachmentId) {
+        Long companyId = requireCompany(principal);
+
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new AttachmentException("Message not found", HttpStatus.NOT_FOUND));
+        assertSameCompany(message, companyId);
+
+        if (!message.getSender().getId().equals(principal.getUserId())) {
+            throw new AttachmentException("Only the sender can remove attachments from this message", HttpStatus.FORBIDDEN);
+        }
+
+        Attachment attachment = attachmentRepository.findByIdAndMessage_Id(attachmentId, messageId)
+                .orElseThrow(() -> new AttachmentException("Attachment not found", HttpStatus.NOT_FOUND));
+
+        storageService.delete(attachment.getStorageKey());
+        attachmentRepository.delete(attachment);
+    }
+
     @Transactional(readOnly = true)
     public ResponseEntity<Resource> download(Long attachmentId, Long companyId) {
         if (companyId == null) {
@@ -317,6 +379,12 @@ public class AttachmentService {
     private void assertSameCompany(Comment comment, Long companyId) {
         if (!comment.getPost().getCompany().getId().equals(companyId)) {
             throw new AttachmentException("Comment not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    private void assertSameCompany(Message message, Long companyId) {
+        if (!message.getConversation().getCompany().getId().equals(companyId)) {
+            throw new AttachmentException("Message not found", HttpStatus.NOT_FOUND);
         }
     }
 

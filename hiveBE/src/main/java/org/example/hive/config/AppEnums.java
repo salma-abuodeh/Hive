@@ -31,7 +31,9 @@ public final class AppEnums {
         ROLE,
         USER,
         EVENT,
-        POLL
+        POLL,
+        CONVERSATION,
+        MESSAGE
     }
 
     public enum EventVisibility {
@@ -78,5 +80,17 @@ public final class AppEnums {
     public enum AttachmentType {
         IMAGE,
         DOCUMENT
+    }
+    public enum ConversationType {
+        DIRECT,
+        GROUP,
+        TEAM
+    }
+
+    public enum MessageType {
+        TEXT,
+        IMAGE,
+        FILE,
+        SYSTEM
     }
 }

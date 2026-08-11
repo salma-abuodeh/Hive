@@ -110,4 +110,10 @@ public class GlobalExceptionHandler {
                 .status(ex.getStatus())
                 .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
     }
+    @ExceptionHandler(ConversationException.class)
+    public ResponseEntity<ErrorResponseDto> handleConversationException(ConversationException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorResponseDto(ex.getStatus().value(), ex.getMessage(), LocalDateTime.now()));
+    }
 }

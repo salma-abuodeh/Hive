@@ -54,6 +54,11 @@ public class SecurityConfig {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
+                // The SockJS handshake (GET /ws/info, then the xhr/websocket
+                // session) happens before any STOMP frame exists, so there's no
+                // JWT on it yet - real auth happens per-session at the STOMP
+                // CONNECT frame via StompAuthChannelInterceptor.
+                .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
