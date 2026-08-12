@@ -85,6 +85,24 @@ public class AttachmentController {
         attachmentService.deleteCommentAttachment(principal, commentId, attachmentId);
     }
 
+    @PostMapping(value = "/messages/{messageId}/attachments", consumes = "multipart/form-data")
+    @PreAuthorize("hasPermission(null, T(org.example.hive.security.Permissions).MESSAGE_CREATE)")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AttachmentResponse uploadMessageAttachment(@PathVariable Long messageId,
+                                                      @AuthenticationPrincipal AuthUserPrincipal principal,
+                                                      @RequestParam("file") MultipartFile file) {
+        return attachmentService.uploadMessageAttachment(principal, messageId, file);
+    }
+
+    @DeleteMapping("/messages/{messageId}/attachments/{attachmentId}")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMessageAttachment(@PathVariable Long messageId,
+                                        @PathVariable Long attachmentId,
+                                        @AuthenticationPrincipal AuthUserPrincipal principal) {
+        attachmentService.deleteMessageAttachment(principal, messageId, attachmentId);
+    }
+
     @GetMapping("/attachments/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Resource> download(@PathVariable Long id,
