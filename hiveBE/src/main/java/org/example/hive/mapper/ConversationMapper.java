@@ -35,7 +35,10 @@ public final class ConversationMapper {
                 .companyId(conversation.getCompany().getId())
                 .teamId(conversation.getTeam() != null ? conversation.getTeam().getId() : null)
                 .createdByUserId(conversation.getCreatedBy() != null ? conversation.getCreatedBy().getId() : null)
-                .name(conversation.getName())
+                // Team conversations are named after their team. This also covers
+                // conversations created before the name was persisted on the
+                // conversation record.
+                .name(conversation.getTeam() != null ? conversation.getTeam().getName() : conversation.getName())
                 .participants(participants)
                 .lastMessage(lastMessage)
                 .unreadCount(unreadCount)

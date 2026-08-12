@@ -80,6 +80,14 @@ export class AttachmentService {
     return this.http.delete<void>(`${this.baseUrl}/posts/comments/${commentId}/attachments/${attachmentId}`);
   }
 
+  uploadMessageAttachment(messageId: number, file: File): Observable<AttachmentResponse> {
+    return this.upload(`/messages/${messageId}/attachments`, file);
+  }
+
+  deleteMessageAttachment(messageId: number, attachmentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/messages/${messageId}/attachments/${attachmentId}`);
+  }
+
   /**
    * Attachment downloads require the Authorization header, so a plain <img src>
    * can't hit them directly. Fetch as a blob (the auth interceptor attaches the

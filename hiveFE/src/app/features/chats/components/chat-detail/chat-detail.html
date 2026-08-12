@@ -1,26 +1,92 @@
 <section class="chat-detail" aria-live="polite">
   @if (conversation(); as chat) {
-    <header class="chat-header">
-      <span class="chat-avatar hex">{{ chat.initials }}</span>
-      <div><h2>{{ chat.name }}</h2><p>{{ chat.type === 'team' ? 'Team channel' : chat.type === 'group' ? 'Group chat' : 'Direct message' }}</p></div>
-    </header>
-    <div class="message-list">
-      @for (message of chat.messages; track message.id) {
-        <article class="message" [class.mine]="message.isMine">
-          @if (!message.isMine) { <span class="message-avatar hex">{{ message.initials }}</span> }
-          <div class="message-content"><strong>{{ message.sender }}</strong><p>{{ message.body }}</p><time>{{ message.sentAt }}</time></div>
-        </article>
-      }
+  <button type="button" class="chat-header" (click)="toggleDetails()" [attr.aria-expanded]="detailsOpen()"
+    aria-controls="chat-details" title="Show conversation details">
+    <span class="chat-avatar hex">{{ chat.initials }}</span>
+    <div>
+      <h2>{{ chat.name }}</h2>
+      <p>{{ chat.type === 'team' ? 'Team channel' : chat.type === 'group' ? 'Group chat' : 'Direct message' }}</p>
     </div>
-    <div class="composer" aria-label="Message composer">
-      <input type="text" placeholder="Messaging will be available soon" disabled>
-      <button type="button" disabled aria-label="Send message"><app-icon name="send" /></button>
+  </button>
+  @if (detailsOpen()) {
+  <div class="details-backdrop" (click)="closeDetails()">
+    <section id="chat-details" class="chat-details" role="dialog" aria-modal="true" aria-labelledby="chat-details-title"
+      (click)="$event.stopPropagation()">
+      <header class="details-header">
+        <div>
+          <h2 id="chat-details-title">{{ chat.name }}</h2>
+          <p>Conversation details</p>
+        </div>
+        <button type="button" class="close-details" (click)="closeDetails()" aria-label="Close conversation details">×</button>
+      </header>
+      <div class="detail-section">
+        <h3>Members <span>{{ chat.participants.length }}</span></h3>
+        <div class="member-list">
+          @for (member of chat.participants; track member.userId) {
+          <span class="member"><span class="member-avatar">{{ member.firstName[0] }}{{ member.lastName[0] }}</span>{{ member.firstName }} {{ member.lastName }}</span>
+          } @empty {
+          <span class="detail-empty">No members to show.</span>
+          }
+        </div>
+      </div>
+      <div class="detail-section">
+        <h3>Shared attachments <span>{{ attachments().length }}</span></h3>
+        <div class="attachment-list">
+          @for (attachment of attachments(); track attachment.id) {
+          <button type="button" class="detail-attachment" (click)="openAttachment(attachment.url)">
+            {{ attachment.attachmentType === 'IMAGE' ? 'Image' : 'Document' }}
+          </button>
+          } @empty {
+          <span class="detail-empty">No attachments shared yet.</span>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+  }
+  <div class="message-list">
+    @for (message of chat.messages; track message.id) {
+    <article class="message" [class.mine]="message.isMine">
+      @if (!message.isMine) { <span class="message-avatar hex">{{ message.initials }}</span> }
+      <div class="message-content"><strong>{{ message.sender }}</strong>
+        <p>{{ message.body }}</p>
+        @for (attachment of message.attachments ?? []; track attachment.id) {
+        @if (attachment.attachmentType === 'IMAGE') {
+        <app-auth-image class="message-image" [src]="attachment.url" alt="Shared chat image"></app-auth-image>
+        } @else {
+        <button type="button" class="attachment-link" (click)="openAttachment(attachment.url)">Download file</button>
+        }
+        }
+        <time>{{ message.sentAt }}</time>
+      </div>
+    </article>
+    }
+  </div>
+  <div class="composer" aria-label="Message composer">
+    <input type="text" placeholder="Write a message" [ngModel]="content()" (ngModelChange)="content.set($event)"
+      (keyup.enter)="send()">
+    <label class="file-button" title="Attach files">📎<input type="file" multiple
+        (change)="chooseFiles($event)"></label>
+    <button type="button" [disabled]="!content().trim() && files().length === 0" (click)="send()"
+      aria-label="Send message"><app-icon name="send" /></button>
+  </div>
+  @if (previews().length) {
+  <div class="photo-previews" aria-label="Selected photos">
+    @for (preview of previews(); track preview.url) {
+    <div class="photo-preview">
+      <img [src]="preview.url" [alt]="preview.file.name">
+      <button type="button" (click)="removeFile(preview.file)" aria-label="Remove {{ preview.file.name }}">×</button>
     </div>
+    }
+  </div>
+  <p class="attachment-status">{{ files().length }} photo{{ files().length === 1 ? '' : 's' }} ready to send</p>
+  }
+  @if (fileError()) { <p class="attachment-error">{{ fileError() }}</p> }
   } @else {
-    <div class="empty-state">
-      <span class="empty-icon hex"><app-icon name="message" /></span>
-      <h2>Pick a conversation</h2>
-      <p>Choose a chat on the left to start messaging.</p>
-    </div>
+  <div class="empty-state">
+    <span class="empty-icon hex"><app-icon name="message" /></span>
+    <h2>Pick a conversation</h2>
+    <p>Choose a chat on the left to start messaging.</p>
+  </div>
   }
 </section>

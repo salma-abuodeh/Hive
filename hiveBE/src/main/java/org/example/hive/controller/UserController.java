@@ -71,6 +71,12 @@ public class UserController {
         return userService.listUsersByManager(principal, active, pageable);
     }
 
+    @GetMapping("/company/members")
+    @PreAuthorize("isAuthenticated()")
+    public java.util.List<UserResponseDto> listCompanyMembers(@AuthenticationPrincipal AuthUserPrincipal principal) {
+        return userService.listCompanyMembers(principal);
+    }
+
     @GetMapping("/company/{id}")
     @PreAuthorize("hasPermission(null, 'USER_VIEW')")
     public UserResponseDto getUserByManager(

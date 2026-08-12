@@ -21,6 +21,7 @@ import org.example.hive.repository.ConversationRepository;
 import org.example.hive.repository.MessageRepository;
 import org.example.hive.repository.UserCompanyRepository;
 import org.example.hive.repository.UserRepository;
+import org.example.hive.repository.UserTeamRepository;
 import org.example.hive.security.Permissions;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
@@ -41,6 +42,7 @@ public class ConversationService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final UserCompanyRepository userCompanyRepository;
+    private final UserTeamRepository userTeamRepository;
 
     public ConversationService(ConversationRepository conversationRepository,
                                ConversationMemberRepository conversationMemberRepository,
@@ -48,7 +50,8 @@ public class ConversationService {
                                AttachmentRepository attachmentRepository,
                                UserRepository userRepository,
                                CompanyRepository companyRepository,
-                               UserCompanyRepository userCompanyRepository) {
+                               UserCompanyRepository userCompanyRepository,
+                               UserTeamRepository userTeamRepository) {
         this.conversationRepository = conversationRepository;
         this.conversationMemberRepository = conversationMemberRepository;
         this.messageRepository = messageRepository;
@@ -56,6 +59,7 @@ public class ConversationService {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.userCompanyRepository = userCompanyRepository;
+        this.userTeamRepository = userTeamRepository;
     }
 
     @Transactional
@@ -214,10 +218,21 @@ public class ConversationService {
 
     @Transactional
     public void syncAddTeamMember(Team team, User user) {
-        conversationRepository.findByTeam_Id(team.getId()).ifPresent(conversation -> {
-            if (!conversationMemberRepository.existsByConversation_IdAndUser_Id(conversation.getId(), user.getId())) {
+        Conversation conversation = conversationRepository.findByTeam_Id(team.getId())
+                .orElseGet(() -> conversationRepository.save(Conversation.builder()
+                        .company(team.getCompany())
+                        .conversationType(ConversationType.TEAM)
+                        .team(team)
+                        .build()));
+
+        // Teams created before chat support have no conversation yet. When one
+        // is first needed, include every existing team member—not just the
+        // member currently being added.
+        userTeamRepository.findAllByTeam_IdOrderByJoinedAtAsc(team.getId()).forEach(membership -> {
+            Long memberId = membership.getUser().getId();
+            if (!conversationMemberRepository.existsByConversation_IdAndUser_Id(conversation.getId(), memberId)) {
                 conversationMemberRepository.save(ConversationMember.builder()
-                        .conversation(conversation).user(user).build());
+                        .conversation(conversation).user(membership.getUser()).build());
             }
         });
     }

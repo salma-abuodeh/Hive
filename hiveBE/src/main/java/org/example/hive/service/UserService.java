@@ -218,6 +218,16 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public List<UserResponseDto> listCompanyMembers(AuthUserPrincipal principal) {
+        if (principal.getCompanyId() == null) {
+            return List.of();
+        }
+        return userCompanyService.listActiveForCompany(principal.getCompanyId()).stream()
+                .map(UserMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public UserResponseDto getUserByManager(AuthUserPrincipal principal, Long id) {
         UserCompany membership = userCompanyService.requireInPrincipalCompanies(principal, id);
         return UserMapper.toResponse(membership, teamSummaries(id, membership.getCompany().getId()));

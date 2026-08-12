@@ -103,6 +103,11 @@ public class UserCompanyService {
     }
 
     @Transactional(readOnly = true)
+    public List<UserCompany> listActiveForCompany(Long companyId) {
+        return userCompanyRepository.findAllByCompany_IdAndActiveTrueOrderByJoinedAtAsc(companyId);
+    }
+
+    @Transactional(readOnly = true)
     public List<CompanySummaryDto> listCompanySummaries(Long userId) {
         return listActiveForUser(userId).stream()
                 .map(uc -> new CompanySummaryDto(uc.getCompany().getId(), uc.getCompany().getName()))
