@@ -17,13 +17,15 @@
           <h2 id="chat-details-title">{{ chat.name }}</h2>
           <p>Conversation details</p>
         </div>
-        <button type="button" class="close-details" (click)="closeDetails()" aria-label="Close conversation details">×</button>
+        <button type="button" class="close-details" (click)="closeDetails()"
+          aria-label="Close conversation details">×</button>
       </header>
       <div class="detail-section">
         <h3>Members <span>{{ chat.participants.length }}</span></h3>
         <div class="member-list">
           @for (member of chat.participants; track member.userId) {
-          <span class="member"><span class="member-avatar">{{ member.firstName[0] }}{{ member.lastName[0] }}</span>{{ member.firstName }} {{ member.lastName }}</span>
+          <span class="member"><span class="member-avatar">{{ member.firstName[0] }}{{ member.lastName[0] }}</span>{{
+            member.firstName }} {{ member.lastName }}</span>
           } @empty {
           <span class="detail-empty">No members to show.</span>
           }
