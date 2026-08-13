@@ -17,6 +17,7 @@ import { adminGuard } from './core/guards/admin.guard';
 import { EventsList } from './features/events/pages/events-list/events-list';
 import { ManagementHome } from './features/management/pages/management-home/management-home';
 import { managementGuard } from './core/guards/management.guard';
+import { ChatsHome } from './features/chats/pages/chats-home/chats-home';
 import { PollsList } from './features/polls/pages/polls-list/polls-list';
 
 export const routes: Routes = [
@@ -35,6 +36,7 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', component: DashboardHome, canActivate: [authGuard] },
       { path: 'feed', component: FeedHome, canActivate: [authGuard] },
+      { path: 'chats', component: ChatsHome, canActivate: [authGuard] },
       { path: 'feed/:id', component: PostDetail, canActivate: [authGuard] },
       { path: 'saved', component: SavedPosts, canActivate: [authGuard] },
       { path: 'company', component: CompanyHome, canActivate: [authGuard] },

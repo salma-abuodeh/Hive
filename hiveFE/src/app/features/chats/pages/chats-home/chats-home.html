@@ -1,0 +1,14 @@
+<section class="chats-page">
+  <header class="chats-heading">
+    <div><h1>Chat</h1><p>Direct messages, group chats, and team channels.</p></div>
+    <button type="button" class="new-chat" aria-disabled="true"><span aria-hidden="true">+</span> New chat</button>
+  </header>
+  <div class="chats-layout">
+    <app-conversation-list
+      [conversations]="conversations"
+      [selectedId]="selectedConversation()?.id ?? null"
+      (conversationSelected)="selectConversation($event)"
+    />
+    <app-chat-detail [conversation]="selectedConversation()" />
+  </div>
+</section>
