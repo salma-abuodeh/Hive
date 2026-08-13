@@ -28,10 +28,141 @@
   margin-bottom: 18px;
 }
 
+/* -------- Facebook-style "what do you want to post" tabs -------- */
+.type-picker {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f1e7d8;
+  padding-bottom: 10px;
+}
+
+.type-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--umber);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  padding: 7px 14px;
+  border-radius: 999px;
+}
+
+.type-tab app-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.type-tab:hover {
+  background: var(--cream-dim);
+}
+
+.type-tab.active {
+  background: var(--amber-light);
+  color: var(--espresso);
+  border-color: var(--amber);
+}
+
 .composer-row {
   display: flex;
   gap: 12px;
   align-items: flex-start;
+}
+
+/* -------- Poll / Event composer fields -------- */
+.poll-form,
+.event-form {
+  display: grid;
+  gap: 8px;
+}
+
+.field-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #eadfce;
+  border-radius: 10px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-family: var(--font-body);
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: var(--shadow-focus);
+}
+
+textarea.field-input {
+  resize: vertical;
+  min-height: 52px;
+}
+
+.option-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.option-row .field-input {
+  flex: 1;
+}
+
+.btn-icon {
+  border: 0;
+  background: transparent;
+  color: var(--umber-light);
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.btn-icon:hover {
+  background: var(--cream-dim);
+  color: var(--error);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--umber);
+  margin-top: 2px;
+}
+
+.datetime-row {
+  display: flex;
+  gap: 8px;
+}
+
+.datetime-row .field-input {
+  flex: 1;
+}
+
+.field-error {
+  display: block;
+  margin: 4px 0 0;
+  font-size: var(--fs-xs);
+  color: var(--error);
+}
+
+.text-btn {
+  align-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--umber);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+  padding: 4px 2px;
+}
+
+.text-btn:hover {
+  color: var(--espresso);
 }
 
 .avatar {
@@ -240,8 +371,13 @@
   width: 100%;
   height: 100%;
   background: var(--cream-dim);
-  font-size: 18px;
+  color: var(--umber);
   text-align: center;
+}
+
+.staged-doc app-icon {
+  width: 18px;
+  height: 18px;
 }
 .staged-doc span {
   font-size: 9px;
@@ -268,10 +404,16 @@
   gap: 6px;
   font-size: var(--fs-xs, 12px);
   font-weight: 600;
+  color: var(--umber);
   cursor: pointer;
   padding: 8px 12px;
   border: 1px solid #eadfce;
   border-radius: 999px;
+}
+
+.attach-btn app-icon {
+  width: 14px;
+  height: 14px;
 }
 .attach-btn input[type="file"] {
   display: none;

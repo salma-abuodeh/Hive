@@ -100,8 +100,8 @@ export class PostDetail implements OnInit {
     call.subscribe({ next: (updated) => this.post.set(updated) });
   }
 
-  onShare(post: Post): void {
-    navigator.clipboard.writeText(`${window.location.origin}/feed/${post.id}`);
+  onShare(): void {
+    // Copying + social share links are now handled entirely inside PostCard's share menu.
   }
 
   onAttachmentsChanged(e: { post: Post; attachments: AttachmentResponse[] }): void {

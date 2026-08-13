@@ -12,7 +12,21 @@ export type AppIcon =
   | 'plus'
   | 'chevronDown'
   | 'events'
-  | 'poll';
+  | 'poll'
+  | 'like'
+  | 'love'
+  | 'laugh'
+  | 'sad'
+  | 'angry'
+  | 'comment'
+  | 'share'
+  | 'attach'
+  | 'document'
+  | 'close'
+  | 'more'
+  | 'send'
+  | 'pencil'
+  | 'link';
 export type NavIcon = AppIcon;
 
 export interface NavMenuItem {
