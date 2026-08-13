@@ -2,15 +2,17 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Team } from '../../../company/models/team.models';
+import { AppIcon } from '../../../../shared/models/nav-menu-item';
 import { Post, ReactionType, VisibilityType, Comment } from '../../models/post.models';
 import { AttachmentResponse } from '../../../../shared/models/attachment.models';
 import { AttachmentService } from '../../../../core/services/attachment.service';
 import { AuthImage } from '../../../../shared/components/auth-image/auth-image';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { PostService } from '../../services/post.service';
 
 @Component({
   selector: 'app-post-card',
-  imports: [DatePipe, FormsModule, AuthImage],
+  imports: [DatePipe, FormsModule, AuthImage, Icon],
   templateUrl: './post-card.html',
   styleUrl: './post-card.css',
 })
@@ -45,13 +47,49 @@ export class PostCard implements OnInit {
   attachmentUploading = signal(false);
   attachmentError = signal('');
 
-  reactions: { type: ReactionType; emoji: string }[] = [
-    { type: 'LIKE', emoji: '👍' },
-    { type: 'LOVE', emoji: '❤️' },
-    { type: 'LAUGHING', emoji: '😂' },
-    { type: 'SAD', emoji: '😢' },
-    { type: 'ANGRY', emoji: '😡' },
+  /** Facebook-style kebab menu for Edit/Delete on the post's own posts. */
+  menuOpen = signal(false);
+
+  /**
+   * Full-colour reaction emoji, served from the Twemoji CDN (the same open-source
+   * emoji set used by Discord/Slack) so they render identically on every OS instead
+   * of relying on the outline icon set or the browser's native emoji font.
+   */
+  private static readonly EMOJI_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/';
+
+  reactions: { type: ReactionType; icon: AppIcon; label: string; img: string }[] = [
+    { type: 'LIKE', icon: 'like', label: 'Like', img: PostCard.EMOJI_BASE + '1f44d.svg' },
+    { type: 'LOVE', icon: 'love', label: 'Love', img: PostCard.EMOJI_BASE + '2764.svg' },
+    { type: 'LAUGHING', icon: 'laugh', label: 'Haha', img: PostCard.EMOJI_BASE + '1f606.svg' },
+    { type: 'SAD', icon: 'sad', label: 'Sad', img: PostCard.EMOJI_BASE + '1f622.svg' },
+    { type: 'ANGRY', icon: 'angry', label: 'Angry', img: PostCard.EMOJI_BASE + '1f620.svg' },
   ];
+
+  /** Facebook-style hover/tap reaction tray on the Like button. */
+  reactionPickerOpen = signal(false);
+
+  openReactionPicker(): void {
+    this.reactionPickerOpen.set(true);
+  }
+
+  closeReactionPicker(): void {
+    this.reactionPickerOpen.set(false);
+  }
+
+  /** Tapping "Like" sends the current reaction (or LIKE by default); the tray is for picking a specific one. */
+  toggleDefaultLike(): void {
+    this.react.emit({ post: this.post(), type: this.post().myReaction ?? 'LIKE' });
+    this.closeReactionPicker();
+  }
+
+  pickReaction(type: ReactionType): void {
+    this.react.emit({ post: this.post(), type });
+    this.closeReactionPicker();
+  }
+
+  currentReaction() {
+    return this.reactions.find((r) => r.type === this.post().myReaction) ?? null;
+  }
 
   // ---------- Inline comments panel ----------
 
@@ -285,6 +323,98 @@ export class PostCard implements OnInit {
       URL.revokeObjectURL(current);
     }
     this.lightboxUrl.set(null);
+  }
+
+  // ---------- Share menu ----------
+
+  shareMenuOpen = signal(false);
+  shareCopied = signal(false);
+
+  toggleShareMenu(): void {
+    this.shareMenuOpen.update((open) => !open);
+  }
+
+  closeShareMenu(): void {
+    this.shareMenuOpen.set(false);
+    this.shareCopied.set(false);
+  }
+
+  /** Permalink for this post (post-detail route), used by every share action below. */
+  private postUrl(): string {
+    return `${window.location.origin}/feed/${this.post().id}`;
+  }
+
+  private shareText(): string {
+    const p = this.post();
+    return `${p.authorFirstName} ${p.authorLastName} on ${this.companyName()}: ${p.content}`.slice(0, 200);
+  }
+
+  copyLink(): void {
+    const url = this.postUrl();
+    const onCopied = () => {
+      this.shareCopied.set(true);
+      this.share.emit(this.post());
+      setTimeout(() => this.closeShareMenu(), 1200);
+    };
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(onCopied).catch(() => this.legacyCopy(url, onCopied));
+    } else {
+      this.legacyCopy(url, onCopied);
+    }
+  }
+
+  /** Fallback for browsers/contexts without the async Clipboard API. */
+  private legacyCopy(text: string, onDone: () => void): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+    } finally {
+      document.body.removeChild(textarea);
+    }
+    onDone();
+  }
+
+  shareToWhatsapp(): void {
+    const text = encodeURIComponent(`${this.shareText()} ${this.postUrl()}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
+    this.share.emit(this.post());
+    this.closeShareMenu();
+  }
+
+  shareToFacebook(): void {
+    const url = encodeURIComponent(this.postUrl());
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'noopener,width=600,height=600');
+    this.share.emit(this.post());
+    this.closeShareMenu();
+  }
+
+  shareToX(): void {
+    const url = encodeURIComponent(this.postUrl());
+    const text = encodeURIComponent(this.shareText());
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'noopener,width=600,height=600');
+    this.share.emit(this.post());
+    this.closeShareMenu();
+  }
+
+  shareToLinkedIn(): void {
+    const url = encodeURIComponent(this.postUrl());
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'noopener,width=600,height=600');
+    this.share.emit(this.post());
+    this.closeShareMenu();
+  }
+
+  shareByEmail(): void {
+    const subject = encodeURIComponent(`${this.post().authorFirstName} shared a post with you`);
+    const body = encodeURIComponent(`${this.shareText()}\n\n${this.postUrl()}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    this.share.emit(this.post());
+    this.closeShareMenu();
   }
 
   // ---------- Post editing / actions ----------

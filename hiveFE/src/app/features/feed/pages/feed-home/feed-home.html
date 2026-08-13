@@ -14,45 +14,113 @@
   }
 
   <form class="composer rise-in" (ngSubmit)="publish()">
-    <div class="composer-row">
-      <span class="hex avatar">{{ initials() }}</span>
-      <textarea
-        [(ngModel)]="content"
-        name="content"
-        rows="3"
-        maxlength="10000"
-        placeholder="Share something with your team..."
-      ></textarea>
+    <div class="type-picker">
+      <button type="button" class="type-tab" [class.active]="postType === 'POST'" (click)="setPostType('POST')">
+        <app-icon name="feed" /> Post
+      </button>
+      @if (canCreatePoll()) {
+        <button type="button" class="type-tab" [class.active]="postType === 'POLL'" (click)="setPostType('POLL')">
+          <app-icon name="poll" /> Poll
+        </button>
+      }
+      <button type="button" class="type-tab" [class.active]="postType === 'EVENT'" (click)="setPostType('EVENT')">
+        <app-icon name="events" /> Event
+      </button>
     </div>
 
-    @if (stagedPreviews().length) {
-      <div class="staged-grid">
-        @for (p of stagedPreviews(); track p.file) {
-          <div class="staged-tile">
-            @if (p.previewUrl) {
-              <img [src]="p.previewUrl" alt="">
-            } @else {
-              <div class="staged-doc">📄<span>{{ p.file.name }}</span></div>
+    @if (postType === 'POST') {
+      <div class="composer-row">
+        <span class="hex avatar">{{ initials() }}</span>
+        <textarea
+          [(ngModel)]="content"
+          name="content"
+          rows="3"
+          maxlength="10000"
+          placeholder="Share something with your team..."
+        ></textarea>
+      </div>
+
+      @if (stagedPreviews().length) {
+        <div class="staged-grid">
+          @for (p of stagedPreviews(); track p.file) {
+            <div class="staged-tile">
+              @if (p.previewUrl) {
+                <img [src]="p.previewUrl" alt="">
+              } @else {
+                <div class="staged-doc"><app-icon name="document" /><span>{{ p.file.name }}</span></div>
+              }
+              <button type="button" class="staged-remove" (click)="removeStagedFile(p.file)" title="Remove">×</button>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (postType === 'POLL') {
+      <div class="poll-form">
+        <input class="field-input" [(ngModel)]="pollQuestion" name="pollQuestion" placeholder="Ask a question..." maxlength="300">
+        <textarea class="field-input" [(ngModel)]="pollDescription" name="pollDescription" rows="2" placeholder="Add context (optional)"></textarea>
+
+        @for (opt of pollOptions; track $index) {
+          <div class="option-row">
+            <input class="field-input" [(ngModel)]="pollOptions[$index]" [name]="'pollOption' + $index" [placeholder]="'Option ' + ($index + 1)" maxlength="150">
+            @if (pollOptions.length > 2) {
+              <button type="button" class="btn-icon" (click)="removePollOption($index)">✕</button>
             }
-            <button type="button" class="staged-remove" (click)="removeStagedFile(p.file)" title="Remove">×</button>
           </div>
         }
+        @if (pollOptions.length < 10) {
+          <button type="button" class="text-btn" (click)="addPollOption()">+ Add option</button>
+        }
+
+        <label class="checkbox-row">
+          <input type="checkbox" [(ngModel)]="pollAllowMultiple" name="pollAllowMultiple">
+          Allow multiple selections
+        </label>
+
+        <div class="datetime-row">
+          <label class="sr-only">Closes on (optional)</label>
+          <input class="field-input" type="date" [(ngModel)]="pollClosesAtDate" name="pollClosesAtDate">
+          <input class="field-input" type="time" [(ngModel)]="pollClosesAtTime" name="pollClosesAtTime" [disabled]="!pollClosesAtDate">
+        </div>
       </div>
     }
+
+    @if (postType === 'EVENT') {
+      <div class="event-form">
+        <input class="field-input" [(ngModel)]="eventTitle" name="eventTitle" placeholder="Event title" maxlength="150">
+        <textarea class="field-input" [(ngModel)]="eventDescription" name="eventDescription" rows="2" placeholder="What should people know? (optional)"></textarea>
+        <input class="field-input" [(ngModel)]="eventLocation" name="eventLocation" placeholder="Location or video call link (optional)">
+
+        <div class="datetime-row">
+          <label class="sr-only">Starts</label>
+          <input class="field-input" type="date" [(ngModel)]="eventStartDate" name="eventStartDate" required>
+          <input class="field-input" type="time" [(ngModel)]="eventStartTime" name="eventStartTime" required>
+        </div>
+        <div class="datetime-row">
+          <label class="sr-only">Ends</label>
+          <input class="field-input" type="date" [(ngModel)]="eventEndDate" name="eventEndDate" required>
+          <input class="field-input" type="time" [(ngModel)]="eventEndTime" name="eventEndTime" required>
+        </div>
+      </div>
+    }
+
     @if (composerError()) {
       <p class="field-error">{{ composerError() }}</p>
     }
 
     <div class="composer-actions">
       <div class="visibility-group">
-        <label class="attach-btn">
-          📎 Attach
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx"
-            (change)="onComposerFileSelected($event.target)"
-          >
-        </label>
+        @if (postType === 'POST') {
+          <label class="attach-btn">
+            <app-icon name="attach" /> Attach
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx"
+              (change)="onComposerFileSelected($event.target)"
+            >
+          </label>
+        }
 
         <label class="visibility">
           <span class="sr-only">Visibility</span>
@@ -77,31 +145,49 @@
       </div>
 
       <div class="composer-buttons">
-        <button type="submit" class="publish-btn" [disabled]="!content.trim() || busy()">
-          {{ busy() ? 'Publishing…' : 'Publish' }}
+        <button type="submit" class="publish-btn" [disabled]="!canPublish() || busy()">
+          {{ busy() ? 'Publishing…' : (postType === 'POST' ? 'Publish' : postType === 'POLL' ? 'Post poll' : 'Post event') }}
         </button>
       </div>
     </div>
   </form>
 
   <div class="post-list">
-    @for (post of posts(); track post.id) {
-      <app-post-card
-        [post]="post"
-        [editing]="editingId === post.id"
-        [saving]="busy() && editingId === post.id"
-        [teams]="myTeams()"
-        [companyName]="companyName()"
-        (edit)="onEdit($event)"
-        (cancelEdit)="cancelEdit()"
-        (saveEdit)="onSaveEdit($event)"
-        (remove)="onDelete($event)"
-        (react)="onReact($event)"
-        (saveToggle)="onSaveToggle($event)"
-        (share)="onShare($event)"
-        (attachmentsChanged)="onAttachmentsChanged($event)"
-        (commentCountChanged)="onCommentCountChanged($event)"
-      />
+    @for (item of feedItems(); track item.key) {
+      @switch (item.kind) {
+        @case ('POST') {
+          <app-post-card
+            [post]="item.post"
+            [editing]="editingId === item.post.id"
+            [saving]="busy() && editingId === item.post.id"
+            [teams]="myTeams()"
+            [companyName]="companyName()"
+            (edit)="onEdit($event)"
+            (cancelEdit)="cancelEdit()"
+            (saveEdit)="onSaveEdit($event)"
+            (remove)="onDelete($event)"
+            (react)="onReact($event)"
+            (saveToggle)="onSaveToggle($event)"
+            (share)="onShare()"
+            (attachmentsChanged)="onAttachmentsChanged($event)"
+            (commentCountChanged)="onCommentCountChanged($event)"
+          />
+        }
+        @case ('POLL') {
+          <app-poll-feed-card
+            [poll]="item.poll"
+            (updated)="onPollUpdated($event)"
+            (deleted)="onPollDeleted($event)"
+          />
+        }
+        @case ('EVENT') {
+          <app-event-feed-card
+            [event]="item.event"
+            (updated)="onEventUpdated($event)"
+            (deleted)="onEventDeleted($event)"
+          />
+        }
+      }
     } @empty {
       @if (!loading()) {
         <div class="empty">
@@ -112,11 +198,11 @@
     }
   </div>
 
-  @if (!lastPage) {
+  @if (!allLoaded()) {
     <button type="button" class="load-more" (click)="loadFeed()" [disabled]="loading()">
       {{ loading() ? 'Loading…' : 'Load more' }}
     </button>
-  } @else if (loading() && posts().length === 0) {
+  } @else if (loading() && feedItems().length === 0) {
     <p class="loading-label">Loading feed…</p>
   }
 </section>

@@ -1,0 +1,79 @@
+<article class="event-card rise-in">
+  <header class="event-head">
+    <div class="author">
+      <span class="hex avatar">{{ initials() }}</span>
+      <div>
+        <div class="name-row">
+          <strong>{{ event().createdByName }}</strong>
+          <span class="type-tag"><app-icon name="events" /> Event</span>
+        </div>
+        <p class="meta">
+          <time>{{ event().createdAt | date: 'MMM d, y · h:mm a' }}</time>
+          @if (event().teamId) {
+            <span> · Team</span>
+          }
+          @if (isPast()) {
+            <span class="past-tag"> · Past</span>
+          }
+        </p>
+      </div>
+    </div>
+
+    @if (canDelete()) {
+      <button type="button" class="menu-trigger" (click)="remove()" aria-label="Delete event">
+        <app-icon name="close" />
+      </button>
+    }
+  </header>
+
+  @if (event().coverUrl) {
+    <app-auth-image class="cover" [src]="event().coverUrl" alt="">
+      <div class="cover-fallback"><app-icon name="events" /></div>
+    </app-auth-image>
+  }
+
+  <h3 class="title">{{ event().title }}</h3>
+  @if (event().description) {
+    <p class="description">{{ event().description }}</p>
+  }
+
+  <div class="details">
+    <div class="detail-row">
+      <app-icon name="events" />
+      <span>{{ event().startTime | date: 'EEE, MMM d · h:mm a' }} – {{ event().endTime | date: 'h:mm a' }}</span>
+    </div>
+    @if (event().location) {
+      <div class="detail-row">
+        <app-icon name="company" />
+        <span>{{ event().location }}</span>
+      </div>
+    }
+  </div>
+
+  @if (isInvitee()) {
+    <footer class="rsvp-row">
+      <span class="rsvp-label">Your response:</span>
+      <button
+        type="button"
+        class="rsvp-btn accept"
+        [class.selected]="event().myRsvpStatus === 'ACCEPTED'"
+        [disabled]="!!responding()"
+        (click)="respond('ACCEPTED')"
+      >Accept</button>
+      <button
+        type="button"
+        class="rsvp-btn maybe"
+        [class.selected]="event().myRsvpStatus === 'MAYBE'"
+        [disabled]="!!responding()"
+        (click)="respond('MAYBE')"
+      >Maybe</button>
+      <button
+        type="button"
+        class="rsvp-btn decline"
+        [class.selected]="event().myRsvpStatus === 'DECLINED'"
+        [disabled]="!!responding()"
+        (click)="respond('DECLINED')"
+      >Decline</button>
+    </footer>
+  }
+</article>

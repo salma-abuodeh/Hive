@@ -15,16 +15,35 @@
           }
           <time>{{ post().createdAt | date: 'MMM d, y · h:mm a' }}</time>
           @if (!editing()) {
-            <span> · {{ post().visibilityType === 'TEAM' ? (post().teamName || 'Team') : 'Everyone at company' }}</span>
+            <span class="vis-tag">
+              <app-icon [name]="post().visibilityType === 'TEAM' ? 'community' : 'company'" />
+              {{ post().visibilityType === 'TEAM' ? (post().teamName || 'Team') : 'Company' }}
+            </span>
           }
         </p>
       </div>
     </div>
 
     @if (post().ownedByMe && !editing()) {
-      <div class="owner-actions">
-        <button type="button" class="text-btn" (click)="startEdit()">Edit</button>
-        <button type="button" class="text-btn danger" (click)="remove.emit(post())">Delete</button>
+      <div class="owner-actions" (mouseleave)="menuOpen.set(false)">
+        <button
+          type="button"
+          class="menu-trigger"
+          (click)="menuOpen.set(!menuOpen())"
+          aria-label="Post options"
+        >
+          <app-icon name="more" />
+        </button>
+        @if (menuOpen()) {
+          <div class="menu-pop">
+            <button type="button" (click)="startEdit(); menuOpen.set(false)">
+              <app-icon name="pencil" /> Edit post
+            </button>
+            <button type="button" class="danger" (click)="remove.emit(post()); menuOpen.set(false)">
+              <app-icon name="close" /> Delete post
+            </button>
+          </div>
+        }
       </div>
     }
   </header>
@@ -83,7 +102,7 @@
         @for (d of documents(); track d.id) {
           <div class="doc-chip">
             <button type="button" class="doc-chip-btn" (click)="openAttachment(d)">
-              <span class="icon">📄</span>
+              <app-icon name="document" />
               <span>Open file</span>
             </button>
             @if (post().ownedByMe) {
@@ -111,34 +130,107 @@
       </div>
     }
 
-    <footer class="actions">
-      <div class="reactions">
-        @for (r of reactions; track r.type) {
-          <button
-            type="button"
-            class="react-btn"
-            [class.on]="post().myReaction === r.type"
-            (click)="react.emit({ post: post(), type: r.type })"
-            [title]="r.type"
-          >
-            {{ r.emoji }}
+    @if (post().likeCount > 0 || post().commentCount > 0) {
+      <div class="stats-row">
+        @if (post().likeCount > 0) {
+          <span class="stats-reactions">
+            <span class="reaction-badge">
+              <img [src]="currentReaction()?.img ?? '/reactions/like.svg'" [alt]="currentReaction()?.label ?? 'Like'">
+            </span>
+            {{ post().likeCount }}
+          </span>
+        }
+        @if (post().commentCount > 0) {
+          <button type="button" class="stats-comments" (click)="toggleComments()">
+            {{ post().commentCount }} {{ post().commentCount === 1 ? 'comment' : 'comments' }}
           </button>
         }
-        <span class="count">{{ post().likeCount }}</span>
+      </div>
+    }
+
+    <footer class="actions">
+      <div
+        class="action-with-tray"
+        (mouseenter)="openReactionPicker()"
+        (mouseleave)="closeReactionPicker()"
+      >
+        @if (reactionPickerOpen()) {
+          <div class="reaction-tray">
+            @for (r of reactions; track r.type) {
+              <button
+                type="button"
+                class="tray-btn"
+                [class.on]="post().myReaction === r.type"
+                (click)="pickReaction(r.type)"
+                [title]="r.label"
+              >
+                <img [src]="r.img" [alt]="r.label">
+              </button>
+            }
+          </div>
+        }
+        <button
+          type="button"
+          [class]="currentReaction() ? 'action on' : 'action'"
+          (click)="toggleDefaultLike()"
+        >
+          @if (currentReaction()) {
+            <img class="action-emoji" [src]="currentReaction()!.img" [alt]="currentReaction()!.label">
+          } @else {
+            <app-icon name="like" />
+          }
+          <span [class]="currentReaction() ? 'r-' + currentReaction()!.type : ''">{{ currentReaction()?.label ?? 'Like' }}</span>
+        </button>
       </div>
 
       <button type="button" class="action" (click)="toggleComments()">
-        <span class="icon">💬</span>
-        <span>{{ post().commentCount }}</span>
+        <app-icon name="comment" />
+        <span>Comment</span>
       </button>
 
-      <button type="button" class="action" (click)="share.emit(post())">
-        <span class="icon">↗</span>
-        <span>Share</span>
-      </button>
+      <div class="action-with-tray" (mouseleave)="closeShareMenu()">
+        <button type="button" class="action" (click)="toggleShareMenu()">
+          <app-icon name="share" />
+          <span>Share</span>
+        </button>
+        @if (shareMenuOpen()) {
+          <div class="share-menu">
+            <button type="button" class="share-item" (click)="copyLink()">
+              <span class="share-badge neutral"><app-icon name="attach" /></span>
+              <span>{{ shareCopied() ? 'Link copied!' : 'Copy link' }}</span>
+            </button>
+            <button type="button" class="share-item" (click)="shareToWhatsapp()">
+              <span class="share-badge wa">WA</span>
+              <span>WhatsApp</span>
+            </button>
+            <button type="button" class="share-item" (click)="shareToFacebook()">
+              <span class="share-badge fb">f</span>
+              <span>Facebook</span>
+            </button>
+            <button type="button" class="share-item" (click)="shareToX()">
+              <span class="share-badge x">X</span>
+              <span>X (Twitter)</span>
+            </button>
+            <button type="button" class="share-item" (click)="shareToLinkedIn()">
+              <span class="share-badge li">in</span>
+              <span>LinkedIn</span>
+            </button>
+            <button type="button" class="share-item" (click)="shareByEmail()">
+              <span class="share-badge neutral"><app-icon name="send" /></span>
+              <span>Email</span>
+            </button>
+          </div>
+        }
+      </div>
 
-      <button type="button" class="action bookmark" [class.on]="post().savedByMe" (click)="saveToggle.emit(post())">
-        <span class="icon">{{ post().savedByMe ? '★' : '☆' }}</span>
+      <button
+        type="button"
+        class="action bookmark"
+        [class.on]="post().savedByMe"
+        (click)="saveToggle.emit(post())"
+        [title]="post().savedByMe ? 'Saved' : 'Save post'"
+      >
+        <app-icon name="saved" />
       </button>
     </footer>
 
@@ -160,7 +252,7 @@
                   @if (p.previewUrl) {
                     <img [src]="p.previewUrl" alt="">
                   } @else {
-                    <div class="comment-staged-doc">📄</div>
+                    <div class="comment-staged-doc"><app-icon name="document" /></div>
                   }
                   <button type="button" class="comment-staged-remove" (click)="removeStagedCommentFile(p.file)">×</button>
                 </div>
@@ -173,7 +265,7 @@
 
           <div class="comment-form-actions">
             <label class="comment-attach-btn">
-              📎
+              <app-icon name="attach" />
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx"
@@ -231,7 +323,7 @@
                     <div class="comment-attachments">
                       @for (d of commentDocuments(comment); track d.id) {
                         <div class="comment-attachment-tile">
-                          <button type="button" class="comment-attachment-doc" (click)="openCommentAttachment(d)">📄</button>
+                          <button type="button" class="comment-attachment-doc" (click)="openCommentAttachment(d)"><app-icon name="document" /></button>
                           @if (comment.ownedByMe) {
                             <button
                               type="button"

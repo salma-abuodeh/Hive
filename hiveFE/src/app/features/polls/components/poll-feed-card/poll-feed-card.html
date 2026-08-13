@@ -1,0 +1,68 @@
+<article class="poll-card rise-in">
+  <header class="poll-head">
+    <div class="author">
+      <span class="hex avatar">{{ initials() }}</span>
+      <div>
+        <div class="name-row">
+          <strong>{{ poll().createdByName }}</strong>
+          <span class="type-tag"><app-icon name="poll" /> Poll</span>
+        </div>
+        <p class="meta">
+          <time>{{ poll().createdAt | date: 'MMM d, y · h:mm a' }}</time>
+          @if (poll().teamId) {
+            <span> · Team</span>
+          }
+        </p>
+      </div>
+    </div>
+
+    @if (canDelete()) {
+      <button type="button" class="menu-trigger" (click)="remove()" aria-label="Delete poll">
+        <app-icon name="close" />
+      </button>
+    }
+  </header>
+
+  <h3 class="question">{{ poll().question }}</h3>
+  @if (poll().description) {
+    <p class="description">{{ poll().description }}</p>
+  }
+
+  <div class="options">
+    @for (option of poll().options; track option.id) {
+      <button
+        type="button"
+        class="option"
+        [class.picked]="option.votedByMe"
+        [disabled]="isClosed() || voting()"
+        (click)="pickOption(option)"
+      >
+        <span class="option-fill" [style.width.%]="percentage(option.voteCount)"></span>
+        <span class="option-text">{{ option.text }}</span>
+        <span class="option-stats">
+          @if (hasVoted() || isClosed()) {
+            {{ percentage(option.voteCount) }}%
+          }
+          @if (option.votedByMe) {
+            <app-icon name="like" />
+          }
+        </span>
+      </button>
+    }
+  </div>
+
+  <footer class="poll-foot">
+    <span>{{ poll().totalVotes }} {{ poll().totalVotes === 1 ? 'vote' : 'votes' }}</span>
+    @if (poll().allowMultiple) {
+      <span> · Choose one or more</span>
+    }
+    @if (isClosed()) {
+      <span class="closed-tag">Closed</span>
+    } @else if (poll().closesAt) {
+      <span> · Closes {{ poll().closesAt | date: 'MMM d, h:mm a' }}</span>
+    }
+    @if (hasVoted() && !isClosed()) {
+      <button type="button" class="text-btn" [disabled]="voting()" (click)="clearVote()">Remove my vote</button>
+    }
+  </footer>
+</article>
