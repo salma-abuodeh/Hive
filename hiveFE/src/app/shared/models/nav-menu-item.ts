@@ -26,9 +26,10 @@ export type AppIcon =
   | 'more'
   | 'send'
   | 'pencil'
-  | 'link';
+  | 'link'
+  | 'chat'
+  | 'message';
 export type NavIcon = AppIcon;
-
 export interface NavMenuItem {
   name: string;
   url: string;
