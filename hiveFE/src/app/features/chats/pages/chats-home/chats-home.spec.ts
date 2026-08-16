@@ -26,6 +26,7 @@ describe('ChatsHome', () => {
       initials: 'EN',
       preview: 'Latest update',
       timestamp: '09:58',
+      participants: [],
       messages: [{ id: 'message-1', sender: 'Rana', initials: 'RN', body: 'The latest build is ready.', sentAt: '09:58' }],
     });
     fixture.detectChanges();

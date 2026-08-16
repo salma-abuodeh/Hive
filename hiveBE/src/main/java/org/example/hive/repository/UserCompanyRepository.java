@@ -21,6 +21,8 @@ public interface UserCompanyRepository extends JpaRepository<UserCompany, Long> 
 
     List<UserCompany> findAllByUser_IdAndActiveTrue(Long userId);
 
+    List<UserCompany> findAllByCompany_IdAndActiveTrueOrderByJoinedAtAsc(Long companyId);
+
     List<UserCompany> findAllByUser_Id(Long userId);
 
     Page<UserCompany> findAllByCompany_IdAndActiveTrue(Long companyId, Pageable pageable);

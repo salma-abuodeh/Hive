@@ -1,14 +1,29 @@
 <section class="chats-page">
   <header class="chats-heading">
     <div><h1>Chat</h1><p>Direct messages, group chats, and team channels.</p></div>
-    <button type="button" class="new-chat" aria-disabled="true"><span aria-hidden="true">+</span> New chat</button>
+    <button type="button" class="new-chat" (click)="openNewChat()"><span aria-hidden="true">+</span> New chat</button>
   </header>
   <div class="chats-layout">
     <app-conversation-list
-      [conversations]="conversations"
+      [conversations]="conversations()"
       [selectedId]="selectedConversation()?.id ?? null"
       (conversationSelected)="selectConversation($event)"
     />
-    <app-chat-detail [conversation]="selectedConversation()" />
+    <app-chat-detail [conversation]="selectedConversation()" (messageSent)="sendMessage($event)" />
   </div>
+  @if (newChatOpen()) {
+    <div class="new-chat-backdrop" (click)="closeNewChat()">
+      <section class="new-chat-dialog" role="dialog" aria-modal="true" aria-labelledby="new-chat-title" (click)="$event.stopPropagation()">
+        <h2 id="new-chat-title">Start a direct chat</h2>
+        <label>Company member
+          <select [ngModel]="targetUserId()" (ngModelChange)="targetUserId.set($event === '' ? null : +$event)">
+            <option value="">Choose a member</option>
+            @for (member of members(); track member.id) { <option [value]="member.id">{{ member.firstName }} {{ member.lastName }} — {{ member.email }}</option> }
+          </select>
+        </label>
+        @if (newChatError()) { <p class="new-chat-error">{{ newChatError() }}</p> }
+        <div class="new-chat-actions"><button type="button" class="secondary" (click)="closeNewChat()">Cancel</button><button type="button" (click)="createDirectChat()">Start chat</button></div>
+      </section>
+    </div>
+  }
 </section>
